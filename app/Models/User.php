@@ -4,6 +4,8 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -92,5 +94,29 @@ class User extends Authenticatable
     {
         $membership = $this->dduMembership;
         return $membership ? $membership->role : null;
+    }
+
+    /**
+     * Google token owned by the user.
+     */
+    public function googleToken(): HasOne
+    {
+        return $this->hasOne(GoogleToken::class);
+    }
+
+    /**
+     * Meeting containers associated to the user.
+     */
+    public function meetingContainers(): HasMany
+    {
+        return $this->hasMany(MeetingContentContainer::class);
+    }
+
+    /**
+     * Meetings synchronized for the user.
+     */
+    public function meetings(): HasMany
+    {
+        return $this->hasMany(MeetingTranscription::class, 'user_id', 'id');
     }
 }

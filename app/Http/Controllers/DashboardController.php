@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Services\Meetings\DriveMeetingService;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -32,17 +33,13 @@ class DashboardController extends Controller
     /**
      * Reuniones index
      */
-    public function reuniones()
+    public function reuniones(DriveMeetingService $driveMeetingService)
     {
-        // Estadísticas de ejemplo para reuniones
-        $stats = [
-            'total' => 15,
-            'programadas' => 3,
-            'finalizadas' => 10,
-            'esta_semana' => 2
-        ];
+        $user = Auth::user();
 
-        return view('dashboard.reuniones.index', compact('stats'));
+        [$meetings, $stats, $googleToken] = $driveMeetingService->getOverviewForUser($user);
+
+        return view('dashboard.reuniones.index', compact('stats', 'meetings', 'googleToken'));
     }
 
     /**
