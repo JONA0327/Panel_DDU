@@ -54,6 +54,52 @@
         </div>
     </div>
 
+    @if (empty($googleToken))
+        <div class="ddu-card border border-amber-200 bg-amber-50 text-amber-800">
+            <div class="p-6 flex flex-col space-y-3">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 class="text-lg font-semibold">Sin conexión con Google Drive</h3>
+                </div>
+                <p class="text-sm leading-relaxed">
+                    Para sincronizar tus reuniones necesitamos que vincules tu cuenta de Google desde Juntify. Una vez que el
+                    token esté activo, se mostrarán aquí todas las grabaciones y transcripciones procesadas automáticamente.
+                </p>
+            </div>
+        </div>
+    @else
+        @php
+            $rootFolder = optional($googleToken->folders)->firstWhere('parent_id', null);
+            $subfolders = optional($rootFolder)->subfolders ?? collect();
+        @endphp
+        <div class="ddu-card">
+            <div class="p-6">
+                <div class="flex flex-col space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="ddu-card-title">Carpeta de grabaciones en Drive</h3>
+                            <p class="ddu-card-subtitle">Sincronizada automáticamente desde tu cuenta personal</p>
+                        </div>
+                        <span class="text-sm text-gray-500">ID: {{ $googleToken->recordings_folder_id ?? 'No configurado' }}</span>
+                    </div>
+                    @if ($subfolders->isNotEmpty())
+                        <div class="flex flex-wrap gap-2">
+                            @foreach ($subfolders as $subfolder)
+                                <span class="px-3 py-1 rounded-full bg-ddu-lavanda/10 text-ddu-lavanda text-sm font-medium">
+                                    {{ $subfolder->name }}
+                                </span>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-sm text-gray-500">No se detectaron subcarpetas configuradas todavía.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Estadísticas rápidas -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="stat-card">
@@ -106,87 +152,90 @@
     </div>
 
     <!-- Lista de reuniones -->
-    <div class="ddu-card">
-        <div class="ddu-card-header">
-            <div>
-                <h3 class="ddu-card-title">Próximas Reuniones</h3>
-                <p class="ddu-card-subtitle">Reuniones programadas y recientes</p>
+        <div class="ddu-card">
+            <div class="ddu-card-header">
+                <div>
+                    <h3 class="ddu-card-title">Reuniones sincronizadas</h3>
+                    <p class="ddu-card-subtitle">Información consolidada desde Google Drive y contenedores locales</p>
+                </div>
             </div>
-        </div>
 
-        <div class="divide-y divide-gray-200">
-            <!-- Ejemplo de reunión programada -->
-            <div class="p-6 hover:bg-gray-50 transition-colors">
-                <div class="flex items-center justify-between">
-                    <div class="flex-1">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 bg-gradient-to-r from-ddu-lavanda to-ddu-aqua rounded-lg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
+            <div class="divide-y divide-gray-200">
+                @forelse ($meetings as $meeting)
+                    <div class="p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-gradient-to-r from-ddu-lavanda to-ddu-aqua rounded-lg flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-semibold text-gray-900">{{ $meeting->meeting_name }}</h4>
+                                        @if ($meeting->meeting_description)
+                                            <p class="text-gray-600">{{ Str::limit($meeting->meeting_description, 140) }}</p>
+                                        @endif
+                                        <div class="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500">
+                                            @if ($meeting->started_at)
+                                                <span class="flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                    {{ $meeting->started_at->format('d/m/Y H:i') }}
+                                                </span>
+                                            @endif
+                                            @if ($meeting->duration_minutes)
+                                                <span class="flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    {{ $meeting->duration_minutes }} min
+                                                </span>
+                                            @endif
+                                            @if ($meeting->containers->isNotEmpty())
+                                                <span class="flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h7" />
+                                                    </svg>
+                                                    {{ $meeting->containers->pluck('name')->implode(', ') }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <h4 class="text-lg font-semibold text-gray-900">Reunión Semanal de Equipo</h4>
-                                <p class="text-gray-600">Revisión de proyectos y planificación semanal</p>
-                                <div class="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                                    <span class="flex items-center">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                        </svg>
-                                        Próximo lunes 10:00 AM
-                                    </span>
-                                    <span class="flex items-center">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        </svg>
-                                        Sala de Conferencias
-                                    </span>
-                                    <span class="flex items-center">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                                        </svg>
-                                        8 participantes
-                                    </span>
+
+                            <div class="flex items-center space-x-3">
+                                <span class="px-3 py-1 text-xs font-medium rounded-full {{ $meeting->status_badge_color }}">
+                                    {{ $meeting->status_label }}
+                                </span>
+                                <div class="flex space-x-2">
+                                    @if ($meeting->transcript_download_url)
+                                        <a class="btn btn-sm btn-outline" href="{{ $meeting->transcript_download_url }}" target="_blank" rel="noopener">
+                                            Transcripción
+                                        </a>
+                                    @endif
+                                    @if ($meeting->audio_download_url)
+                                        <a class="btn btn-sm btn-primary" href="{{ $meeting->audio_download_url }}" target="_blank" rel="noopener">
+                                            Audio
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="flex items-center space-x-3">
-                        <span class="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                            Programada
-                        </span>
-                        <div class="flex space-x-2">
-                            <button class="btn btn-sm btn-outline" onclick="editMeeting(1)">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                </svg>
-                            </button>
-                            <button class="btn btn-sm btn-primary" onclick="viewMeeting(1)">
-                                Ver Detalles
-                            </button>
-                        </div>
+                @empty
+                    <div class="p-12 text-center">
+                        <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No hay reuniones sincronizadas</h3>
+                        <p class="text-gray-500 mb-6">Las reuniones aparecerán automáticamente cuando el proceso de Juntify termine la sincronización.</p>
                     </div>
-                </div>
-            </div>
-
-            <!-- Estado vacío cuando no hay reuniones -->
-            <div class="p-12 text-center" style="display: none;" id="emptyState">
-                <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">No hay reuniones programadas</h3>
-                <p class="text-gray-500 mb-6">Comienza creando tu primera reunión</p>
-                <button class="btn btn-primary" onclick="showCreateMeetingModal()">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Crear Primera Reunión
-                </button>
+                @endforelse
             </div>
         </div>
-    </div>
 </div>
 
 <!-- Modal para crear reunión -->
