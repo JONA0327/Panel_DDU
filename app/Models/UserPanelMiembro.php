@@ -1,0 +1,111 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class UserPanelMiembro extends Model
+{
+    use HasFactory;
+
+    /**
+     * The table associated with the model.
+     */
+    protected $table = 'user_panel_miembros';
+
+    /**
+     * The primary key associated with the table.
+     */
+    protected $primaryKey = 'id';
+
+    /**
+     * Indicates if the model should be timestamped.
+     */
+    public $timestamps = true;
+
+    /**
+     * The attributes that are mass assignable.
+     */
+    protected $fillable = [
+        'panel_id',
+        'user_id',
+        'role',
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
+     * Get the user that owns the membership.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    /**
+     * Get the panel that owns the membership.
+     */
+    public function panel(): BelongsTo
+    {
+        return $this->belongsTo(UserPanelAdministrativo::class, 'panel_id', 'id');
+    }
+
+    /**
+     * Scope to filter by DDU company
+     */
+    public function scopeDduMembers($query)
+    {
+        return $query->whereHas('panel', function ($q) {
+            $q->where('company_name', 'DDU');
+        });
+    }
+
+    /**
+     * Check if user is a DDU member by email or user_id
+     */
+    public static function isDduMember($userIdentifier, $requiredRole = null)
+    {
+        // Si es un email, buscar por email; si es numérico, buscar por ID
+        if (filter_var($userIdentifier, FILTER_VALIDATE_EMAIL)) {
+            $query = static::whereHas('user', function ($q) use ($userIdentifier) {
+                $q->where('email', $userIdentifier);
+            })->whereHas('panel', function ($q) {
+                $q->where('company_name', 'DDU');
+            });
+        } else {
+            $query = static::where('user_id', $userIdentifier)
+                ->whereHas('panel', function ($q) {
+                    $q->where('company_name', 'DDU');
+                });
+        }
+
+        if ($requiredRole) {
+            $query->where('role', $requiredRole);
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Get user's DDU membership info
+     */
+    public static function getDduMembership($userId)
+    {
+        return static::with(['panel', 'user'])
+            ->where('user_id', $userId)
+            ->whereHas('panel', function ($q) {
+                $q->where('company_name', 'DDU');
+            })
+            ->first();
+    }
+}
