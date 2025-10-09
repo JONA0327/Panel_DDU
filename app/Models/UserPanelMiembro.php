@@ -32,6 +32,8 @@ class UserPanelMiembro extends Model
         'panel_id',
         'user_id',
         'role',
+        'permission_id',
+        'is_active',
         'created_at',
         'updated_at',
     ];
@@ -61,6 +63,14 @@ class UserPanelMiembro extends Model
     }
 
     /**
+     * Get the permission for this membership.
+     */
+    public function permission(): BelongsTo
+    {
+        return $this->belongsTo(Permission::class, 'permission_id', 'id');
+    }
+
+    /**
      * Scope to filter by DDU company
      */
     public function scopeDduMembers($query)
@@ -79,21 +89,16 @@ class UserPanelMiembro extends Model
         if (filter_var($userIdentifier, FILTER_VALIDATE_EMAIL)) {
             $query = static::whereHas('user', function ($q) use ($userIdentifier) {
                 $q->where('email', $userIdentifier);
-            })->whereHas('panel', function ($q) {
-                $q->where('company_name', 'DDU');
             });
         } else {
-            $query = static::where('user_id', $userIdentifier)
-                ->whereHas('panel', function ($q) {
-                    $q->where('company_name', 'DDU');
-                });
+            $query = static::where('user_id', $userIdentifier);
         }
 
         if ($requiredRole) {
             $query->where('role', $requiredRole);
         }
 
-        return $query->exists();
+        return $query->where('is_active', true)->exists();
     }
 
     /**

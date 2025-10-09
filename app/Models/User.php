@@ -13,14 +13,31 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
+     * Indicates if the model's ID is auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
+
+    /**
+     * The data type of the auto-incrementing ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
+        'current_organization_id',
+        'username',
+        'full_name',
         'email',
         'password',
+        'roles',
     ];
 
     /**
@@ -57,9 +74,7 @@ class User extends Authenticatable
     public function dduMembership()
     {
         return $this->hasOne(UserPanelMiembro::class, 'user_id', 'id')
-            ->whereHas('panel', function ($query) {
-                $query->where('company_name', 'DDU');
-            });
+            ->where('is_active', true);
     }
 
     /**
