@@ -162,7 +162,7 @@
 
             <div class="divide-y divide-gray-200">
                 @forelse ($meetings as $meeting)
-                    <div class="p-6 hover:bg-gray-50 transition-colors">
+                    <div class="p-6 hover:bg-gray-50 transition-colors cursor-pointer" data-meeting-id="{{ $meeting->id }}" onclick="openMeetingModal({{ $meeting->id }})">
                         <div class="flex items-center justify-between">
                             <div class="flex-1">
                                 <div class="flex items-center space-x-3">
@@ -212,12 +212,12 @@
                                 </span>
                                 <div class="flex space-x-2">
                                     @if ($meeting->transcript_download_url)
-                                        <a class="btn btn-sm btn-outline" href="{{ $meeting->transcript_download_url }}" target="_blank" rel="noopener">
+                                        <a class="btn btn-sm btn-outline" href="{{ $meeting->transcript_download_url }}" target="_blank" rel="noopener" onclick="event.stopPropagation();">
                                             Transcripción
                                         </a>
                                     @endif
                                     @if ($meeting->audio_download_url)
-                                        <a class="btn btn-sm btn-primary" href="{{ $meeting->audio_download_url }}" target="_blank" rel="noopener">
+                                        <a class="btn btn-sm btn-primary" href="{{ $meeting->audio_download_url }}" target="_blank" rel="noopener" onclick="event.stopPropagation();">
                                             Audio
                                         </a>
                                     @endif
@@ -236,6 +236,26 @@
                 @endforelse
             </div>
         </div>
+</div>
+
+<!-- Modal para ver detalles de la reunión -->
+<div id="viewMeetingModal" class="modal" style="display: none;">
+    <div class="modal-content max-w-4xl">
+        <div class="modal-header">
+            <h3 class="modal-title" id="viewMeetingTitle">Detalles de la reunión</h3>
+            <button class="modal-close" onclick="closeMeetingModal()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div id="meetingModalBody" class="space-y-6">
+            <div class="py-12 text-center text-gray-500" id="meetingModalPlaceholder">
+                Selecciona una reunión para ver sus detalles.
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal para crear reunión -->
@@ -305,6 +325,25 @@
 </div>
 
 <script>
+const meetingsShowBaseUrl = "{{ url('/reuniones') }}/";
+let meetingModalAbortController = null;
+let meetingAudioElement = null;
+
+document.getElementById('viewMeetingModal').addEventListener('click', function(event) {
+    if (event.target === this) {
+        closeMeetingModal();
+    }
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const modal = document.getElementById('viewMeetingModal');
+        if (modal.style.display === 'flex') {
+            closeMeetingModal();
+        }
+    }
+});
+
 function showCreateMeetingModal() {
     document.getElementById('createMeetingModal').style.display = 'flex';
     // Establecer fecha mínima como hoy
@@ -317,14 +356,375 @@ function hideCreateMeetingModal() {
     document.getElementById('createMeetingForm').reset();
 }
 
+function openMeetingModal(meetingId) {
+    const modal = document.getElementById('viewMeetingModal');
+    const modalBody = document.getElementById('meetingModalBody');
+    const modalTitle = document.getElementById('viewMeetingTitle');
+
+    modal.style.display = 'flex';
+    modalTitle.textContent = 'Cargando reunión...';
+    modalBody.innerHTML = '<div class="py-12 text-center text-gray-500">Cargando detalles de la reunión...</div>';
+    meetingAudioElement = null;
+
+    if (meetingModalAbortController) {
+        meetingModalAbortController.abort();
+    }
+
+    meetingModalAbortController = new AbortController();
+
+    fetch(`${meetingsShowBaseUrl}${meetingId}`, {
+        headers: {
+            'Accept': 'application/json'
+        },
+        signal: meetingModalAbortController.signal
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('No se pudieron cargar los detalles de la reunión.');
+            }
+
+            return response.json();
+        })
+        .then(data => {
+            renderMeetingModal(data);
+        })
+        .catch(error => {
+            if (error.name === 'AbortError') {
+                return;
+            }
+
+            modalTitle.textContent = 'Detalles de la reunión';
+            modalBody.innerHTML = `<div class="py-12 text-center text-red-500">${escapeHtml(error.message || 'Ocurrió un error al obtener la información.')}</div>`;
+        });
+}
+
+function closeMeetingModal() {
+    const modal = document.getElementById('viewMeetingModal');
+    modal.style.display = 'none';
+    document.getElementById('viewMeetingTitle').textContent = 'Detalles de la reunión';
+    document.getElementById('meetingModalBody').innerHTML = '<div class="py-12 text-center text-gray-500" id="meetingModalPlaceholder">Selecciona una reunión para ver sus detalles.</div>';
+
+    if (meetingModalAbortController) {
+        meetingModalAbortController.abort();
+        meetingModalAbortController = null;
+    }
+
+    meetingAudioElement = null;
+}
+
+function renderMeetingModal(payload) {
+    const { meeting = {}, ju = {}, tasks = [] } = payload || {};
+    const modalBody = document.getElementById('meetingModalBody');
+    const modalTitle = document.getElementById('viewMeetingTitle');
+
+    modalTitle.textContent = meeting.name ? escapeHtml(meeting.name) : 'Detalles de la reunión';
+
+    const metaItems = [];
+    if (meeting.started_at) {
+        metaItems.push(`<span class="flex items-center text-sm text-gray-600"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${formatDateTime(meeting.started_at)}</span>`);
+    }
+    if (meeting.duration_minutes) {
+        metaItems.push(`<span class="flex items-center text-sm text-gray-600"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${meeting.duration_minutes} min</span>`);
+    }
+    if (meeting.status) {
+        metaItems.push(`<span class="px-3 py-1 text-xs font-medium rounded-full bg-ddu-lavanda/10 text-ddu-lavanda">${escapeHtml(meeting.status)}</span>`);
+    }
+
+    const containers = Array.isArray(meeting.containers) ? meeting.containers : [];
+    const containersHtml = containers.length
+        ? containers.map(container => `<span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">${escapeHtml(container.name)}</span>`).join(' ')
+        : '<span class="text-sm text-gray-500">Sin contenedores asociados.</span>';
+
+    const summary = ju && typeof ju.summary === 'string' && ju.summary.trim() !== ''
+        ? `<p class="text-gray-700 leading-relaxed whitespace-pre-line">${escapeHtml(ju.summary)}</p>`
+        : '<p class="text-sm text-gray-500">Sin resumen disponible.</p>';
+
+    const keyPointsSource = ju && Array.isArray(ju.key_points) ? ju.key_points : [];
+    const keyPoints = keyPointsSource.length
+        ? `<ul class="list-disc pl-6 space-y-2 text-gray-700">${keyPointsSource.map(point => `<li>${escapeHtml(point)}</li>`).join('')}</ul>`
+        : '<p class="text-sm text-gray-500">Sin puntos clave registrados.</p>';
+
+    const tasksHtml = Array.isArray(tasks) && tasks.length
+        ? `<div class="space-y-4">${tasks.map(task => renderTask(task)).join('')}</div>`
+        : '<p class="text-sm text-gray-500">Sin tareas registradas para esta reunión.</p>';
+
+    const segmentsSource = ju && Array.isArray(ju.segments) ? ju.segments : [];
+    const segmentsHtml = buildSegmentsHtml(segmentsSource);
+
+    const audioHtml = meeting.audio_url
+        ? `<div class="ddu-card shadow-none border border-gray-200"><div class="p-4 space-y-3"><div><h4 class="text-lg font-semibold text-gray-900">Grabación</h4><p class="text-sm text-gray-500">Escucha el audio completo o salta a los segmentos específicos.</p></div><audio id="meetingAudioPlayer" controls class="w-full rounded-lg" src="${escapeAttribute(meeting.audio_url)}"></audio></div></div>`
+        : '<div class="ddu-card shadow-none border border-gray-200"><div class="p-4 text-sm text-gray-500">No se encontró un audio asociado a esta reunión.</div></div>';
+
+    const transcriptLink = meeting.transcript_url
+        ? `<a class="btn btn-sm btn-outline" href="${escapeAttribute(meeting.transcript_url)}" target="_blank" rel="noopener">Abrir transcripción original</a>`
+        : '';
+
+    const descriptionHtml = meeting.description
+        ? `<p class="text-gray-600">${escapeHtml(meeting.description)}</p>`
+        : '';
+
+    modalBody.innerHTML = `
+        <div class="space-y-6">
+            <div class="ddu-card shadow-none border border-gray-200">
+                <div class="p-4 space-y-3">
+                    <div class="flex flex-wrap items-center gap-3">${metaItems.join('')}</div>
+                    ${descriptionHtml}
+                    <div class="flex flex-wrap gap-2">${containersHtml}</div>
+                    ${transcriptLink ? `<div>${transcriptLink}</div>` : ''}
+                </div>
+            </div>
+
+            ${audioHtml}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="ddu-card shadow-none border border-gray-200">
+                    <div class="p-4 space-y-3">
+                        <h4 class="text-lg font-semibold text-gray-900">Resumen</h4>
+                        ${summary}
+                    </div>
+                </div>
+                <div class="ddu-card shadow-none border border-gray-200">
+                    <div class="p-4 space-y-3">
+                        <h4 class="text-lg font-semibold text-gray-900">Puntos clave</h4>
+                        ${keyPoints}
+                    </div>
+                </div>
+            </div>
+
+            <div class="ddu-card shadow-none border border-gray-200">
+                <div class="p-4 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-lg font-semibold text-gray-900">Transcripción segmentada</h4>
+                        <p class="text-xs text-gray-500">Haz clic en un segmento para reproducirlo.</p>
+                    </div>
+                    ${segmentsHtml}
+                </div>
+            </div>
+
+            <div class="ddu-card shadow-none border border-gray-200">
+                <div class="p-4 space-y-3">
+                    <h4 class="text-lg font-semibold text-gray-900">Tareas de seguimiento</h4>
+                    ${tasksHtml}
+                </div>
+            </div>
+        </div>
+    `;
+
+    meetingAudioElement = document.getElementById('meetingAudioPlayer');
+}
+
+function renderTask(task) {
+    const priority = task.prioridad ? `<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-ddu-lavanda/10 text-ddu-lavanda">${escapeHtml(task.prioridad)}</span>` : '';
+    const dates = [];
+    if (task.fecha_inicio) {
+        dates.push(`Inicio: ${formatDate(task.fecha_inicio)}`);
+    }
+    if (task.fecha_limite) {
+        dates.push(`Entrega: ${formatDate(task.fecha_limite)}`);
+    }
+
+    const description = task.descripcion ? `<p class="text-sm text-gray-600">${escapeHtml(task.descripcion)}</p>` : '';
+    const progress = Number.isFinite(Number(task.progreso)) ? Math.max(0, Math.min(100, Number(task.progreso))) : 0;
+
+    return `
+        <div class="border border-gray-200 rounded-lg p-4 space-y-2">
+            <div class="flex items-center justify-between">
+                <h5 class="font-semibold text-gray-900">${escapeHtml(task.tarea)}</h5>
+                ${priority}
+            </div>
+            ${dates.length ? `<p class="text-xs text-gray-500">${dates.join(' • ')}</p>` : ''}
+            ${description}
+            <div>
+                <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+                    <span>Progreso</span>
+                    <span>${progress}%</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2">
+                    <div class="bg-ddu-lavanda h-2 rounded-full" style="width: ${progress}%"></div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function buildSegmentsHtml(segments) {
+    if (!Array.isArray(segments) || !segments.length) {
+        return '<p class="text-sm text-gray-500">No se encontraron segmentos de transcripción.</p>';
+    }
+
+    let html = '';
+    let currentSpeaker = null;
+
+    segments.forEach((segment, index) => {
+        const speaker = typeof segment.speaker === 'string' && segment.speaker.trim() !== '' ? segment.speaker.trim() : `Hablante ${index + 1}`;
+        const startSeconds = parseTimeToSeconds(segment.start);
+        const label = formatTimeLabel(segment.start);
+        const text = typeof segment.text === 'string' ? segment.text : '';
+
+        if (speaker !== currentSpeaker) {
+            if (currentSpeaker !== null) {
+                html += '</div>';
+            }
+            html += `<div class="space-y-2"><h5 class="text-sm font-semibold text-gray-900">${escapeHtml(speaker)}</h5>`;
+            currentSpeaker = speaker;
+        }
+
+        html += `
+            <button type="button" class="w-full text-left border border-gray-200 rounded-lg px-3 py-2 hover:bg-ddu-lavanda/10 focus:outline-none focus:ring-2 focus:ring-ddu-lavanda" data-start-seconds="${Number.isFinite(startSeconds) ? startSeconds : ''}" onclick="seekSegment(this)">
+                <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+                    <span>${escapeHtml(label)}</span>
+                    <span>Segmento</span>
+                </div>
+                <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(text)}</p>
+            </button>
+        `;
+    });
+
+    if (currentSpeaker !== null) {
+        html += '</div>';
+    }
+
+    return html;
+}
+
+function seekSegment(button) {
+    if (!meetingAudioElement) {
+        return;
+    }
+
+    const seconds = parseFloat(button.getAttribute('data-start-seconds'));
+    if (!Number.isFinite(seconds)) {
+        return;
+    }
+
+    meetingAudioElement.currentTime = Math.max(0, seconds);
+    meetingAudioElement.play();
+}
+
+function parseTimeToSeconds(value) {
+    if (value === null || value === undefined) {
+        return NaN;
+    }
+
+    if (typeof value === 'number') {
+        return value;
+    }
+
+    const stringValue = String(value).trim();
+    if (stringValue === '') {
+        return NaN;
+    }
+
+    if (/^\d+(\.\d+)?$/.test(stringValue)) {
+        return parseFloat(stringValue);
+    }
+
+    const parts = stringValue.split(':').map(Number);
+    if (parts.some(number => Number.isNaN(number))) {
+        return NaN;
+    }
+
+    let seconds = 0;
+    for (let i = 0; i < parts.length; i++) {
+        const valuePart = parts[parts.length - 1 - i];
+        seconds += valuePart * Math.pow(60, i);
+    }
+
+    return seconds;
+}
+
+function formatTimeLabel(value) {
+    if (value === null || value === undefined) {
+        return '0:00';
+    }
+
+    if (typeof value === 'number') {
+        return formatSeconds(value);
+    }
+
+    const stringValue = String(value).trim();
+    if (stringValue === '') {
+        return '0:00';
+    }
+
+    if (/^\d+(\.\d+)?$/.test(stringValue)) {
+        return formatSeconds(parseFloat(stringValue));
+    }
+
+    return stringValue;
+}
+
+function formatSeconds(totalSeconds) {
+    const seconds = Math.max(0, Math.floor(totalSeconds));
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+
+    const formattedMinutes = String(minutes).padStart(hours > 0 ? 2 : 1, '0');
+    const formattedSeconds = String(remainingSeconds).padStart(2, '0');
+
+    return hours > 0
+        ? `${hours}:${formattedMinutes}:${formattedSeconds}`
+        : `${formattedMinutes}:${formattedSeconds}`;
+}
+
+function formatDateTime(isoString) {
+    try {
+        const date = new Date(isoString);
+        if (Number.isNaN(date.getTime())) {
+            return isoString;
+        }
+
+        return date.toLocaleString('es-ES', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        });
+    } catch (error) {
+        return isoString;
+    }
+}
+
+function formatDate(isoString) {
+    try {
+        const date = new Date(isoString);
+        if (Number.isNaN(date.getTime())) {
+            return isoString;
+        }
+
+        return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    } catch (error) {
+        return isoString;
+    }
+}
+
+function escapeHtml(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function escapeAttribute(value) {
+    return escapeHtml(value).replace(/`/g, '&#096;');
+}
+
 function editMeeting(id) {
     // TODO: Implementar edición de reunión
     console.log('Editar reunión', id);
 }
 
 function viewMeeting(id) {
-    // TODO: Implementar vista de detalles
-    console.log('Ver reunión', id);
+    openMeetingModal(id);
 }
 
 // Manejo del formulario

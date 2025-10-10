@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 class MeetingTranscription extends Model
@@ -42,6 +43,14 @@ class MeetingTranscription extends Model
     {
         return $this->belongsToMany(MeetingContentContainer::class, 'meeting_content_relations', 'meeting_id', 'container_id')
             ->withTimestamps();
+    }
+
+    /**
+     * Tasks generated for this meeting.
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(MeetingTask::class, 'meeting_id');
     }
 
     /**
