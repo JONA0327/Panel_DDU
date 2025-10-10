@@ -21,6 +21,16 @@ class UserPanelMiembro extends Model
     protected $primaryKey = 'id';
 
     /**
+     * Indicates if the IDs are auto-incrementing.
+     */
+    public $incrementing = true;
+
+    /**
+     * The "type" of the primary key ID.
+     */
+    protected $keyType = 'int';
+
+    /**
      * Indicates if the model should be timestamped.
      */
     public $timestamps = true;
@@ -34,8 +44,6 @@ class UserPanelMiembro extends Model
         'role',
         'permission_id',
         'is_active',
-        'created_at',
-        'updated_at',
     ];
 
     /**

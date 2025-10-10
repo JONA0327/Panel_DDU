@@ -101,7 +101,7 @@ class User extends Authenticatable
      */
     public function googleToken(): HasOne
     {
-        return $this->hasOne(GoogleToken::class);
+        return $this->hasOne(GoogleToken::class, 'username', 'username');
     }
 
     /**

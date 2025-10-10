@@ -49,12 +49,34 @@
             @php
                 $authUser = Auth::user();
                 $authEmail = $authUser->email ?? 'no-email';
+                $authUserId = $authUser->id ?? null;
 
                 // Buscar miembro activo por email del usuario autenticado
                 $currentMember = App\Models\UserPanelMiembro::where('is_active', true)
                     ->whereHas('user', function($query) use ($authEmail) {
                         $query->where('email', $authEmail);
                     })->first();
+
+                // Si no se encuentra como miembro, verificar si es el administrador principal
+                if (!$currentMember && $authUserId) {
+                    // Verificar en user_panel_administrativo usando el UUID
+                    $adminRecord = \Illuminate\Support\Facades\DB::table('user_panel_administrativo')
+                        ->where('administrator_id', $authUserId)
+                        ->first();
+
+                    if ($adminRecord) {
+                        // Es el administrador principal, crear/obtener su registro de miembro
+                        $currentMember = App\Models\UserPanelMiembro::firstOrCreate(
+                            ['user_id' => $authUserId],
+                            [
+                                'panel_id' => 1,
+                                'role' => 'administrador',
+                                'permission_id' => 1,
+                                'is_active' => true
+                            ]
+                        );
+                    }
+                }
 
                 // Obtener el usuario correcto directamente por su UUID desde el miembro
                 $correctUser = null;

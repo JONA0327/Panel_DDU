@@ -22,14 +22,13 @@ class DriveMeetingService
         $meetings = MeetingTranscription::query()
             ->forUser($user)
             ->with('containers')
-            ->orderByDesc('started_at')
             ->orderByDesc('created_at')
             ->get();
 
         $containerMeetings = MeetingContentContainer::query()
-            ->where('user_id', $user->id)
+            ->where('username', $user->username)
             ->with(['meetings' => function ($query) {
-                $query->orderByDesc('started_at')->orderByDesc('created_at');
+                $query->orderByDesc('created_at');
             }])
             ->get()
             ->flatMap(function (MeetingContentContainer $container) {

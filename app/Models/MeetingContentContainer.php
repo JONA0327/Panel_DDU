@@ -12,11 +12,18 @@ class MeetingContentContainer extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
-        'google_token_id',
+        'username',
+        'group_id',
         'name',
         'description',
-        'google_folder_id',
+        'drive_folder_id',
+        'metadata',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'metadata' => 'array',
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -24,15 +31,15 @@ class MeetingContentContainer extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'username', 'username');
     }
 
     /**
-     * Associated Google token.
+     * Associated Google token (by username).
      */
     public function googleToken(): BelongsTo
     {
-        return $this->belongsTo(GoogleToken::class);
+        return $this->belongsTo(GoogleToken::class, 'username', 'username');
     }
 
     /**

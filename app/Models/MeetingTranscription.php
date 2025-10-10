@@ -19,13 +19,10 @@ class MeetingTranscription extends Model
     public const STATUS_FAILED = 'failed';
 
     protected $fillable = [
-        'user_id',
         'username',
         'meeting_name',
         'meeting_description',
         'status',
-        'started_at',
-        'ended_at',
         'duration_seconds',
         'transcript_drive_id',
         'transcript_download_url',
@@ -35,8 +32,6 @@ class MeetingTranscription extends Model
     ];
 
     protected $casts = [
-        'started_at' => 'datetime',
-        'ended_at' => 'datetime',
         'metadata' => 'array',
     ];
 
@@ -54,8 +49,7 @@ class MeetingTranscription extends Model
      */
     public function scopeForUser($query, User $user)
     {
-        return $query->where('user_id', $user->id)
-            ->when($user->username, fn ($q) => $q->orWhere('username', $user->username));
+        return $query->where('username', $user->username);
     }
 
     /**
@@ -91,14 +85,10 @@ class MeetingTranscription extends Model
      */
     public function getDurationMinutesAttribute(): ?int
     {
-        if (! $this->started_at instanceof Carbon || ! $this->ended_at instanceof Carbon) {
-            if ($this->duration_seconds) {
-                return (int) ceil($this->duration_seconds / 60);
-            }
-
-            return null;
+        if ($this->duration_seconds) {
+            return (int) ceil($this->duration_seconds / 60);
         }
 
-        return (int) ceil($this->ended_at->diffInSeconds($this->started_at) / 60);
+        return null;
     }
 }

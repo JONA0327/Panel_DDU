@@ -34,8 +34,10 @@ return new class extends Migration
         }
 
         Schema::table('user_panel_miembros', function (Blueprint $table) {
-            // Agregar campo para permisos
-            $table->foreignId('permission_id')->after('user_id')->constrained('permissions')->default(2); // lector por defecto
+            // Agregar campo para permisos solo si no existe
+            if (!Schema::hasColumn('user_panel_miembros', 'permission_id')) {
+                $table->foreignId('permission_id')->after('user_id')->constrained('permissions')->default(2); // lector por defecto
+            }
 
             // Agregar campos adicionales para gestión (solo si no existen)
             if (!Schema::hasColumn('user_panel_miembros', 'joined_at')) {
