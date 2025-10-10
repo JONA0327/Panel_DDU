@@ -68,6 +68,54 @@ class JuDecryptionService
         return null;
     }
 
+    /**
+     * Desencripta el contenido de un archivo .ju proporcionado como cadena.
+     */
+    public static function decryptContent(string $content): ?array
+    {
+        $jsonData = json_decode($content, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)) {
+            Log::info('El contenido proporcionado ya es JSON válido (sin encriptar).');
+            return $jsonData;
+        }
+
+        try {
+            $decryptedJson = Crypt::decryptString($content);
+            $decoded = json_decode($decryptedJson, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Falló la desencriptación del contenido con la APP_KEY actual. Intentando con claves legacy.', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $legacyKeys = array_filter(array_map('trim', explode(',', (string) env('LEGACY_APP_KEYS', ''))));
+        $cipher = config('app.cipher', 'AES-256-CBC');
+
+        foreach ($legacyKeys as $legacyKey) {
+            try {
+                $rawKey = self::resolveKey($legacyKey);
+                if (!$rawKey) {
+                    continue;
+                }
+
+                $encrypter = new Encrypter($rawKey, $cipher);
+                $decryptedJson = $encrypter->decryptString($content);
+                $decoded = json_decode($decryptedJson, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    return $decoded;
+                }
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        Log::error('Todas las claves (actual y legacy) fallaron al intentar desencriptar el contenido proporcionado.');
+        return null;
+    }
+
     private static function resolveKey(string $key): ?string
     {
         $key = trim($key);
