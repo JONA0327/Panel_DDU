@@ -132,4 +132,36 @@ class MeetingController extends Controller
 
         return null;
     }
+
+    public function downloadJu(MeetingTranscription $meeting, Request $request)
+    {
+        $user = Auth::user();
+
+        // Verificar que el usuario tenga acceso a esta reunión
+        if ($meeting->user_id !== optional($user)->id && $meeting->username !== optional($user)->username) {
+            abort(403, 'No tienes permisos para acceder a esta reunión');
+        }
+
+        $juFilePath = $request->query('path');
+        if (!$juFilePath) {
+            abort(400, 'Ruta del archivo .ju no especificada');
+        }
+
+        // Resolver la ruta del archivo
+        $resolvedPath = $this->resolveFilePath($juFilePath);
+        if (!$resolvedPath) {
+            abort(404, 'Archivo .ju no encontrado');
+        }
+
+        // Verificar que es un archivo .ju
+        if (!str_ends_with(strtolower($resolvedPath), '.ju')) {
+            abort(400, 'El archivo especificado no es un archivo .ju válido');
+        }
+
+        // Generar nombre del archivo para descarga
+        $fileName = 'reunion_' . $meeting->id . '_' . ($meeting->meeting_name ? Str::slug($meeting->meeting_name) : 'sin_nombre') . '.ju';
+
+        // Retornar el archivo para descarga
+        return response()->download($resolvedPath, $fileName);
+    }
 }

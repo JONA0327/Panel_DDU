@@ -12,12 +12,7 @@
             <p class="text-gray-600 mt-1">Organiza y gestiona las reuniones del equipo DDU</p>
         </div>
 
-        <button class="btn btn-primary" onclick="showCreateMeetingModal()">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Nueva Reunión
-        </button>
+
     </div>
 
     <!-- Filtros y búsqueda -->
@@ -160,69 +155,99 @@
                 </div>
             </div>
 
-            <div class="divide-y divide-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
                 @forelse ($meetings as $meeting)
                     @php
                         $juFilePath = data_get($meeting->metadata, 'ju_local_path')
                             ?? data_get($meeting->metadata, 'ju_file_path')
                             ?? data_get($meeting->metadata, 'ju_path');
                     @endphp
-                    <div class="p-6 hover:bg-gray-50 transition-colors">
-                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                            <div class="flex-1">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-12 h-12 bg-gradient-to-r from-ddu-lavanda to-ddu-aqua rounded-lg flex items-center justify-center">
-                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-lg font-semibold text-gray-900">{{ $meeting->meeting_name }}</h4>
-                                        @if ($meeting->meeting_description)
-                                            <p class="text-gray-600">{{ Str::limit($meeting->meeting_description, 140) }}</p>
-                                        @endif
-                                        <div class="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500">
-                                            @if ($meeting->started_at)
-                                                <span class="flex items-center">
-                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                    {{ $meeting->started_at->format('d/m/Y H:i') }}
-                                                </span>
-                                            @endif
-                                            @if ($meeting->duration_minutes)
-                                                <span class="flex items-center">
-                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    {{ $meeting->duration_minutes }} min
-                                                </span>
-                                            @endif
-                                            @if ($meeting->containers->isNotEmpty())
-                                                <span class="flex items-center">
-                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h7" />
-                                                    </svg>
-                                                    {{ $meeting->containers->pluck('name')->implode(', ') }}
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </div>
+                    <div class="ddu-card hover:shadow-lg transition-shadow cursor-pointer" onclick="openMeetingModal({{ $meeting->id }})">
+                        <div class="ddu-card-header">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-gradient-to-r from-ddu-lavanda to-ddu-aqua rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="ddu-card-title truncate">{{ $meeting->meeting_name }}</h4>
+                                    <p class="ddu-card-subtitle">Sincronizada automáticamente</p>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="flex flex-col items-start sm:items-end gap-3">
-                                <span class="px-3 py-1 text-xs font-medium rounded-full {{ $meeting->status_badge_color }}">
+                        <div class="p-4">
+                            @if ($meeting->meeting_description)
+                                <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ Str::limit($meeting->meeting_description, 100) }}</p>
+                            @endif
+
+                            <div class="space-y-2 text-sm text-gray-500">
+                                @if ($meeting->started_at)
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        <span>{{ $meeting->started_at->format('d/m/Y H:i') }}</span>
+                                    </div>
+                                @endif
+                                @if ($meeting->duration_minutes)
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>{{ $meeting->duration_minutes }} minutos</span>
+                                    </div>
+                                @endif
+                                @if ($meeting->containers->isNotEmpty())
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h7" />
+                                        </svg>
+                                        <span class="truncate">{{ $meeting->containers->pluck('name')->implode(', ') }}</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full {{ $meeting->status_badge_color }}">
                                     {{ $meeting->status_label }}
                                 </span>
+
                                 @if ($juFilePath)
-                                    <button type="button"
-                                            class="btn btn-outline btn-sm btn-ver-detalles"
-                                            data-path="{{ $juFilePath }}"
-                                            data-audio-url="{{ $meeting->audio_download_url }}"
-                                            data-title="{{ $meeting->meeting_name }}">
-                                        Ver detalles
-                                    </button>
+                                    <div class="flex space-x-1">
+                                        @if ($meeting->audio_download_url)
+                                            <button type="button"
+                                                    class="btn btn-outline btn-xs"
+                                                    onclick="event.stopPropagation(); window.open('{{ $meeting->audio_download_url }}', '_blank')"
+                                                    title="Descargar audio">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M6.343 6.343a8 8 0 000 11.314m15.314-11.314a8 8 0 000 11.314" />
+                                                </svg>
+                                            </button>
+                                        @endif
+                                        <button type="button"
+                                                class="btn btn-outline btn-xs"
+                                                onclick="event.stopPropagation(); downloadJuFile({{ $meeting->id }}, '{{ $juFilePath }}')"
+                                                title="Descargar archivo .ju">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                            </svg>
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-primary btn-xs"
+                                                data-meeting-id="{{ $meeting->id }}"
+                                                data-path="{{ $juFilePath }}"
+                                                data-audio-url="{{ $meeting->audio_download_url }}"
+                                                data-title="{{ $meeting->meeting_name }}"
+                                                onclick="event.stopPropagation(); openMeetingModal({{ $meeting->id }})"
+                                                title="Ver transcripción">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 @else
                                     <span class="text-xs text-gray-400 italic">Transcripción no disponible</span>
                                 @endif
@@ -376,6 +401,10 @@
 
 .modal-oculto .modal-contenido {
     animation: slideOut 0.2s ease-in;
+}
+
+body.modal-open {
+    overflow: hidden;
 }
 
 .modal-cerrar {
@@ -771,20 +800,356 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', closeModal);
+        closeModalBtn.addEventListener('click', closeMeetingModal);
     }
 
     modal.addEventListener('click', (event) => {
         if (event.target === modal || event.target.classList.contains('ju-modal-backdrop')) {
-            closeModal();
+            closeMeetingModal();
         }
     });
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
-            closeModal();
+            closeMeetingModal();
         }
     });
 });
+
+// Variables globales para el modal
+let currentMeetingId = null;
+const meetingsShowBaseUrl = "{{ url('/reuniones') }}/";
+
+// Función para abrir el modal de reunión
+function openMeetingModal(meetingId) {
+    console.log('openMeetingModal llamada con ID:', meetingId);
+
+    // Verificar que el DOM esté listo
+    if (document.readyState === 'loading') {
+        console.log('DOM aún cargando, esperando...');
+        document.addEventListener('DOMContentLoaded', () => openMeetingModal(meetingId));
+        return;
+    }
+
+    currentMeetingId = meetingId;
+    const modal = document.getElementById('reunionModal');
+    const modalTitle = document.getElementById('modalTitulo');
+    const modalResumen = document.getElementById('modalResumen');
+
+    console.log('Elementos encontrados:', { modal, modalTitle, modalResumen });
+
+    if (!modal) {
+        console.error('Modal no encontrado - ID: reunionModal');
+        return;
+    }
+
+    if (!modalTitle) {
+        console.error('modalTitle no encontrado - ID: modalTitulo');
+        return;
+    }
+
+    if (!modalResumen) {
+        console.error('modalResumen no encontrado - ID: modalResumen');
+        return;
+    }
+
+    // Mostrar el modal
+    console.log('Mostrando modal - clases antes:', modal.className);
+    modal.classList.remove('modal-oculto');
+    document.body.classList.add('modal-open');
+    console.log('Modal mostrado - clases después:', modal.className);
+
+    // Mostrar estado de carga
+    console.log('Estableciendo contenido de carga...');
+    modalTitle.textContent = 'Cargando reunión...';
+    modalResumen.innerHTML = `
+        <div class="flex items-center justify-center py-8">
+            <div class="relative">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-ddu-lavanda border-t-transparent"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-ddu-lavanda" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="ml-4">
+                <h3 class="text-lg font-semibold text-gray-700">Procesando reunión</h3>
+                <p class="text-gray-500">Desencriptando archivo .ju y cargando detalles...</p>
+                <p class="text-sm text-gray-400">ID de reunión: ${meetingId}</p>
+            </div>
+        </div>
+    `;
+
+    console.log('Contenido establecido, iniciando fetch...');
+
+    // Hacer la petición para obtener los datos básicos de la reunión
+    fetch(`${meetingsShowBaseUrl}${meetingId}`, {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('No se pudieron cargar los detalles de la reunión.');
+        }
+        return response.json();
+    })
+    .then(basicData => {
+        // Renderizar la información básica primero
+        renderBasicMeetingInfo(basicData);
+
+        // Buscar el botón que se clickeó para obtener la información del archivo .ju
+        const clickedButton = document.querySelector(`[data-meeting-id="${meetingId}"]`);
+        const juFilePath = clickedButton?.dataset.path;
+        const audioUrl = clickedButton?.dataset.audioUrl;
+
+        if (juFilePath) {
+            // Cargar los detalles del archivo .ju
+            loadJuDetails(juFilePath, audioUrl);
+        } else {
+            // No hay archivo .ju, mostrar solo la información básica
+            showNoJuFileMessage();
+        }
+    })
+    .catch(error => {
+        console.error('Error cargando reunión:', error);
+        modalTitle.textContent = 'Error al cargar reunión';
+        modalResumen.innerHTML = `
+            <div class="text-center py-8">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">No se pudo cargar la reunión</h3>
+                <p class="text-gray-500 mb-4">${error.message || 'Ocurrió un error inesperado'}</p>
+                <button onclick="openMeetingModal(${meetingId})" class="btn btn-primary mr-2">
+                    Reintentar
+                </button>
+                <button onclick="closeMeetingModal()" class="btn btn-outline">
+                    Cerrar
+                </button>
+            </div>
+        `;
+    });
+}
+
+// Función para renderizar la información básica de la reunión
+function renderBasicMeetingInfo(data) {
+    const { meeting = {}, tasks = [] } = data || {};
+    const modalTitle = document.getElementById('modalTitulo');
+    const modalResumen = document.getElementById('modalResumen');
+
+    // Actualizar título
+    modalTitle.textContent = meeting.name || 'Detalles de la reunión';
+
+    // Mostrar información básica
+    const basicInfo = [];
+    if (meeting.description) {
+        basicInfo.push(`<strong>Descripción:</strong> ${meeting.description}`);
+    }
+    if (meeting.started_at) {
+        const startDate = new Date(meeting.started_at);
+        basicInfo.push(`<strong>Fecha:</strong> ${startDate.toLocaleString()}`);
+    }
+    if (meeting.duration_minutes) {
+        basicInfo.push(`<strong>Duración:</strong> ${meeting.duration_minutes} minutos`);
+    }
+    if (meeting.status) {
+        basicInfo.push(`<strong>Estado:</strong> ${meeting.status}`);
+    }
+
+    modalResumen.innerHTML = basicInfo.length > 0
+        ? basicInfo.join('<br>')
+        : 'Cargando información detallada...';
+}
+
+// Función para cargar los detalles del archivo .ju
+function loadJuDetails(juFilePath, audioUrl) {
+    const modalResumen = document.getElementById('modalResumen');
+
+    // Mostrar estado de carga para el archivo .ju
+    modalResumen.innerHTML += `
+        <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg" id="ju-loading">
+            <div class="flex items-center">
+                <div class="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent mr-3"></div>
+                <div>
+                    <h4 class="text-sm font-medium text-blue-800">Procesando archivo .ju</h4>
+                    <p class="text-sm text-blue-700">Desencriptando y cargando contenido detallado...</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Hacer petición a showDetails
+    const detailsUrl = "{{ route('reuniones.showDetails') }}";
+    const params = new URLSearchParams({
+        path: juFilePath,
+        audio_url: audioUrl || ''
+    });
+
+    fetch(`${detailsUrl}?${params}`, {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al cargar los detalles del archivo .ju');
+        }
+        return response.json();
+    })
+    .then(juData => {
+        // Remover el indicador de carga
+        const loadingElement = document.getElementById('ju-loading');
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+
+        // Mostrar banner de éxito
+        showSuccessBanner('Archivo .ju procesado exitosamente', 'Información detallada cargada correctamente.');
+
+        // Actualizar resumen
+        const summary = juData.summary || 'Sin resumen disponible.';
+        modalResumen.innerHTML = modalResumen.innerHTML.replace('Cargando información detallada...', '') +
+            `<div class="mt-4"><strong>Resumen:</strong><br>${summary}</div>`;
+
+        // Mostrar puntos clave
+        fillKeyPoints(juData.key_points || []);
+
+        // Mostrar segmentos
+        fillSegments(juData.segments || []);
+
+        // Cargar audio
+        if (juData.audio_url) {
+            loadAudio(juData.audio_url);
+        }
+    })
+    .catch(error => {
+        console.error('Error cargando detalles .ju:', error);
+
+        // Remover el indicador de carga
+        const loadingElement = document.getElementById('ju-loading');
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+
+        // Mostrar banner de error
+        showErrorBanner('Error al procesar archivo .ju', error.message || 'No se pudo desencriptar el archivo.');
+
+        // Limpiar secciones que no se pudieron cargar
+        fillKeyPoints([]);
+        fillSegments([]);
+    });
+}
+
+// Función para mostrar mensaje cuando no hay archivo .ju
+function showNoJuFileMessage() {
+    showWarningBanner('Sin archivo .ju disponible', 'Esta reunión no tiene archivo de transcripción procesado.');
+    fillKeyPoints([]);
+    fillSegments([]);
+}
+
+// Funciones para mostrar banners de estado
+function showSuccessBanner(title, message) {
+    showBanner('success', title, message, 'green');
+}
+
+function showErrorBanner(title, message) {
+    showBanner('error', title, message, 'red');
+}
+
+function showWarningBanner(title, message) {
+    showBanner('warning', title, message, 'yellow');
+}
+
+function showBanner(type, title, message, color) {
+    const modalResumen = document.getElementById('modalResumen');
+    const banner = document.createElement('div');
+    banner.className = `bg-${color}-50 border border-${color}-200 rounded-lg p-4 mb-4 status-banner`;
+
+    let icon = '';
+    if (type === 'success') {
+        icon = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>';
+    } else if (type === 'error') {
+        icon = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>';
+    } else {
+        icon = '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>';
+    }
+
+    banner.innerHTML = `
+        <div class="flex items-start">
+            <svg class="w-5 h-5 text-${color}-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                ${icon}
+            </svg>
+            <div>
+                <h4 class="text-sm font-medium text-${color}-800">${title}</h4>
+                <p class="text-sm text-${color}-700 mt-1">${message}</p>
+            </div>
+        </div>
+    `;
+
+    modalResumen.parentNode.insertBefore(banner, modalResumen);
+}
+
+// Función para cerrar el modal
+function closeMeetingModal() {
+    console.log('closeMeetingModal llamada');
+    const modal = document.getElementById('reunionModal');
+    if (modal) {
+        modal.classList.add('modal-oculto');
+        document.body.classList.remove('modal-open');
+
+        // Limpiar contenido
+        const modalTitle = document.getElementById('modalTitulo');
+        const modalResumen = document.getElementById('modalResumen');
+        const modalPuntosClave = document.getElementById('modalPuntosClave');
+        const modalSegmentos = document.getElementById('modalSegmentos');
+
+        if (modalTitle) modalTitle.textContent = 'Reunión';
+        if (modalResumen) modalResumen.textContent = 'Selecciona una reunión para ver los detalles.';
+        if (modalPuntosClave) modalPuntosClave.innerHTML = '';
+        if (modalSegmentos) modalSegmentos.innerHTML = '';
+
+        // Limpiar banners de estado
+        const banners = modal.querySelectorAll('.status-banner, .bg-red-50, .bg-yellow-50, .bg-green-50, .bg-blue-50');
+        banners.forEach(banner => banner.remove());
+
+        // Limpiar audio
+        const modalAudio = document.getElementById('modalAudio');
+        const modalAudioStatus = document.getElementById('modalAudioStatus');
+        if (modalAudio) {
+            modalAudio.pause();
+            modalAudio.removeAttribute('src');
+            modalAudio.classList.add('hidden');
+        }
+        if (modalAudioStatus) {
+            modalAudioStatus.textContent = 'Selecciona una reunión para cargar el audio.';
+        }
+
+        // Resetear variable global
+        currentMeetingId = null;
+    }
+}
+
+// Función para descargar archivo .ju
+function downloadJuFile(meetingId, juFilePath) {
+    if (!juFilePath) {
+        alert('No hay archivo .ju disponible para esta reunión');
+        return;
+    }
+
+    console.log('Descargando archivo .ju:', juFilePath);
+
+    // Crear un enlace temporal para forzar la descarga
+    const link = document.createElement('a');
+    link.href = `/reuniones/${meetingId}/download-ju?path=${encodeURIComponent(juFilePath)}`;
+    link.download = `reunion_${meetingId}.ju`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 </script>
 @endsection
