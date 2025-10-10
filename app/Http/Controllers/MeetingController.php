@@ -3,17 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\MeetingTranscription;
-use App\Services\Meetings\MeetingContentParsing;
-use App\Services\JuFileDecryption;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class MeetingController extends Controller
 {
-    public function show(MeetingTranscription $meeting, MeetingContentParsing $parser): JsonResponse
+    public function show(MeetingTranscription $meeting): JsonResponse
     {
         $user = Auth::user();
 
@@ -24,54 +19,6 @@ class MeetingController extends Controller
         $meeting->load(['containers:id,name', 'tasks' => function ($query) {
             $query->orderBy('fecha_limite')->orderBy('created_at');
         }]);
-
-        $juResult = ['data' => null, 'needs_encryption' => false];
-        $juError = null;
-        $juSource = null;
-
-        // Intentar obtener contenido del archivo .ju usando múltiples métodos
-        if ($juContent = $this->resolveJuContent($meeting)) {
-            try {
-                // Usar el nuevo método de desencriptación que sigue el flujo documentado
-                $juResult = JuFileDecryption::decryptJuContent($juContent);
-                if (! empty($juResult['data'])) {
-                    $juSource = 'metadata';
-                }
-            } catch (\Throwable $exception) {
-                $juError = $exception->getMessage();
-                Log::warning('Unable to parse .ju file for meeting', [
-                    'meeting_id' => $meeting->id,
-                    'error' => $exception->getMessage(),
-                ]);
-            }
-        }
-
-        // Si no se pudo obtener desde metadata, buscar archivo .ju en el sistema
-        if (! $juResult['data'] && $user->username) {
-            try {
-                $juFilePath = JuFileDecryption::findJuFileForMeeting($meeting->meeting_name, $user->username);
-
-                if ($juFilePath) {
-                    // Usar el método mejorado que maneja el flujo completo de Laravel Crypt
-                    $fileResult = JuFileDecryption::decrypt($juFilePath);
-
-                    if ($fileResult) {
-                        $juSource = 'filesystem';
-                        $juResult['data'] = $fileResult;
-                        $juResult['raw'] = $fileResult;
-                        $juResult['needs_encryption'] = false;
-                        $juError = null;
-
-                        Log::info("Archivo .ju desencriptado exitosamente para reunión {$meeting->id} desde {$juFilePath}");
-                    }
-                }
-            } catch (\Throwable $exception) {
-                Log::error("Error procesando archivo .ju para reunión {$meeting->id}: " . $exception->getMessage());
-                if (!$juError) {
-                    $juError = "No se pudo procesar el archivo .ju: " . $exception->getMessage();
-                }
-            }
-        }
 
         $meetingData = [
             'id' => $meeting->id,
@@ -101,93 +48,9 @@ class MeetingController extends Controller
             ];
         })->values();
 
-        if ($tasks->isEmpty()) {
-            $juActionItems = collect(data_get($juResult, 'data.action_items', []));
-
-            if ($juActionItems->isNotEmpty()) {
-                $tasks = $juActionItems->map(function ($item, $index) {
-                    $title = Arr::get($item, 'title')
-                        ?? Arr::get($item, 'description')
-                        ?? 'Tarea '.($index + 1);
-
-                    return [
-                        'id' => 'ju-'.$index,
-                        'tarea' => $title,
-                        'prioridad' => Arr::get($item, 'priority'),
-                        'fecha_inicio' => Arr::get($item, 'start_date'),
-                        'fecha_limite' => Arr::get($item, 'due_date'),
-                        'descripcion' => Arr::get($item, 'description'),
-                        'progreso' => Arr::get($item, 'progress'),
-                        'responsable' => Arr::get($item, 'owner'),
-                    ];
-                })->values();
-            }
-        }
-
-        $juActionItems = collect(data_get($juResult, 'data.action_items', []))->values()->all();
-
         return response()->json([
             'meeting' => $meetingData,
-            'ju' => $juResult['data'],
-            'ju_needs_encryption' => $juResult['needs_encryption'] ?? false,
-            'ju_error' => $juError,
-            'ju_source' => $juSource,
-            'ju_action_items' => $juActionItems,
-            'ju_raw' => $juResult['raw'] ?? null,
             'tasks' => $tasks,
         ]);
-    }
-
-    protected function resolveJuContent(MeetingTranscription $meeting): ?string
-    {
-        $metadata = $meeting->metadata;
-
-        if (is_string($metadata)) {
-            $decoded = json_decode($metadata, true);
-            $metadata = json_last_error() === JSON_ERROR_NONE ? $decoded : null;
-        }
-
-        if (! is_array($metadata)) {
-            return null;
-        }
-
-        $contentCandidates = [
-            Arr::get($metadata, 'ju_content'),
-            Arr::get($metadata, 'juFile.content'),
-            Arr::get($metadata, 'ju_file.content'),
-            Arr::get($metadata, 'ju.data'),
-        ];
-
-        foreach ($contentCandidates as $candidate) {
-            if (is_string($candidate) && trim($candidate) !== '') {
-                return $candidate;
-            }
-        }
-
-        $pathCandidates = [
-            Arr::get($metadata, 'ju_file_path'),
-            Arr::get($metadata, 'juFile.path'),
-            Arr::get($metadata, 'ju_file.path'),
-            Arr::get($metadata, 'paths.ju'),
-        ];
-
-        foreach ($pathCandidates as $path) {
-            if (is_string($path)) {
-                // Intentar primero con Storage de Laravel
-                if (Storage::exists($path)) {
-                    return Storage::get($path);
-                }
-
-                // Intentar como ruta absoluta del sistema
-                if (file_exists($path)) {
-                    $content = file_get_contents($path);
-                    if ($content !== false) {
-                        return $content;
-                    }
-                }
-            }
-        }
-
-        return null;
     }
 }
