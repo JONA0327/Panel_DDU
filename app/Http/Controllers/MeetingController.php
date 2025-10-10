@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MeetingTranscription;
 use App\Services\Meetings\MeetingContentParsing;
+use App\Services\JuFileDecryption;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -27,6 +28,7 @@ class MeetingController extends Controller
         $juResult = ['data' => null, 'needs_encryption' => false];
         $juError = null;
 
+        // Intentar obtener contenido del archivo .ju usando múltiples métodos
         if ($juContent = $this->resolveJuContent($meeting)) {
             try {
                 $juResult = $parser->decryptJuFile($juContent);
@@ -36,6 +38,29 @@ class MeetingController extends Controller
                     'meeting_id' => $meeting->id,
                     'error' => $exception->getMessage(),
                 ]);
+            }
+        }
+
+        // Si no se pudo obtener desde metadata, buscar archivo .ju en el sistema
+        if (!$juResult['data'] && $user->username) {
+            try {
+                $juFilePath = JuFileDecryption::findJuFileForMeeting($meeting->meeting_name, $user->username);
+
+                if ($juFilePath) {
+                    $decryptedContent = JuFileDecryption::decrypt($juFilePath);
+
+                    if ($decryptedContent) {
+                        $juResult['data'] = JuFileDecryption::extractMeetingInfo($decryptedContent);
+                        $juError = null;
+
+                        Log::info("Archivo .ju desencriptado exitosamente para reunión {$meeting->id} desde {$juFilePath}");
+                    }
+                }
+            } catch (\Throwable $exception) {
+                Log::error("Error procesando archivo .ju para reunión {$meeting->id}: " . $exception->getMessage());
+                if (!$juError) {
+                    $juError = "No se pudo procesar el archivo .ju: " . $exception->getMessage();
+                }
             }
         }
 
@@ -110,8 +135,19 @@ class MeetingController extends Controller
         ];
 
         foreach ($pathCandidates as $path) {
-            if (is_string($path) && Storage::exists($path)) {
-                return Storage::get($path);
+            if (is_string($path)) {
+                // Intentar primero con Storage de Laravel
+                if (Storage::exists($path)) {
+                    return Storage::get($path);
+                }
+
+                // Intentar como ruta absoluta del sistema
+                if (file_exists($path)) {
+                    $content = file_get_contents($path);
+                    if ($content !== false) {
+                        return $content;
+                    }
+                }
             }
         }
 
