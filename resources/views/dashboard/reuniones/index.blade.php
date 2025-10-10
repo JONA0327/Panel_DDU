@@ -373,7 +373,15 @@ function closeMeetingModal() {
 }
 
 function renderMeetingModal(payload) {
-    const { meeting = {}, ju = {}, tasks = [], ju_error = null, ju_needs_encryption = false } = payload || {};
+    const {
+        meeting = {},
+        ju = {},
+        tasks = [],
+        ju_error = null,
+        ju_needs_encryption = false,
+        ju_action_items = [],
+        ju_source = null,
+    } = payload || {};
     const modalBody = document.getElementById('meetingModalBody');
     const modalTitle = document.getElementById('viewMeetingTitle');
 
@@ -404,9 +412,12 @@ function renderMeetingModal(payload) {
         ? `<ul class="list-disc pl-6 space-y-2 text-gray-700">${keyPointsSource.map(point => `<li>${escapeHtml(point)}</li>`).join('')}</ul>`
         : '<p class="text-sm text-gray-500">Sin puntos clave registrados.</p>';
 
-    const tasksHtml = Array.isArray(tasks) && tasks.length
-        ? `<div class="space-y-4">${tasks.map(task => renderTask(task)).join('')}</div>`
-        : '<p class="text-sm text-gray-500">Sin tareas registradas para esta reunión.</p>';
+    let tasksHtml = '<p class="text-sm text-gray-500">Sin tareas registradas para esta reunión.</p>';
+    if (Array.isArray(tasks) && tasks.length) {
+        tasksHtml = `<div class="space-y-4">${tasks.map(task => renderTask(task)).join('')}</div>`;
+    } else if (Array.isArray(ju_action_items) && ju_action_items.length) {
+        tasksHtml = `<div class="space-y-4">${ju_action_items.map((item, index) => renderJuActionItem(item, index)).join('')}</div>`;
+    }
 
     const segmentsSource = ju && Array.isArray(ju.segments) ? ju.segments : [];
     const segmentsHtml = buildSegmentsHtml(segmentsSource);
@@ -425,6 +436,7 @@ function renderMeetingModal(payload) {
 
     // Banner de información sobre desencriptación
     const decryptionBanner = renderDecryptionBanner(ju, ju_error, ju_needs_encryption);
+    const juDetailsHtml = buildJuDetailsCard(ju, ju_source);
 
     modalBody.innerHTML = `
         <div class="space-y-6">
@@ -438,6 +450,8 @@ function renderMeetingModal(payload) {
             </div>
 
             ${decryptionBanner}
+
+            ${juDetailsHtml}
 
             ${audioHtml}
 
@@ -533,6 +547,99 @@ function renderDecryptionBanner(ju, juError, needsEncryption) {
     return ''; // No mostrar banner si no hay información relevante
 }
 
+function buildJuDetailsCard(ju, source) {
+    if (!ju || typeof ju !== 'object') {
+        return '';
+    }
+
+    const infoBadges = [];
+
+    if (ju.timestamp) {
+        const timestampLabel = formatDateTime(ju.timestamp);
+        infoBadges.push(`<span class="inline-flex items-center px-2 py-1 rounded-full bg-ddu-lavanda/10 text-ddu-lavanda text-xs font-medium">${escapeHtml(timestampLabel)}</span>`);
+    }
+
+    if (ju.duration !== null && ju.duration !== undefined && ju.duration !== '') {
+        const durationLabel = formatDurationLabel(ju.duration);
+        if (durationLabel) {
+            infoBadges.push(`<span class="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">${escapeHtml(durationLabel)}</span>`);
+        }
+    }
+
+    const sourceLabel = formatJuSourceLabel(source);
+
+    const participants = Array.isArray(ju.participants)
+        ? ju.participants
+            .map(participant => {
+                if (!participant || typeof participant !== 'object') {
+                    return null;
+                }
+
+                const name = participant.name || participant.nombre || '';
+                if (!name) {
+                    return null;
+                }
+
+                const role = participant.role || participant.rol || '';
+                return {
+                    name: escapeHtml(name),
+                    role: role ? escapeHtml(role) : null,
+                };
+            })
+            .filter(Boolean)
+        : [];
+
+    const metadataEntries = ju.metadata && typeof ju.metadata === 'object' && !Array.isArray(ju.metadata)
+        ? Object.entries(ju.metadata)
+            .filter(([key, value]) => key && value !== null && value !== '')
+            .map(([key, value]) => [escapeHtml(String(key)), escapeHtml(formatMetadataValue(value))])
+        : [];
+
+    if (!infoBadges.length && !participants.length && !metadataEntries.length && !sourceLabel) {
+        return '';
+    }
+
+    const badgesHtml = infoBadges.length
+        ? `<div class="flex flex-wrap gap-2">${infoBadges.join('')}</div>`
+        : '';
+
+    const sourceHtml = sourceLabel
+        ? `<p class="text-xs text-gray-500">Origen: ${escapeHtml(sourceLabel)}</p>`
+        : '';
+
+    const participantsHtml = participants.length
+        ? `<div class="space-y-2">
+                <h5 class="text-sm font-semibold text-gray-900">Participantes</h5>
+                <div class="flex flex-wrap gap-2">
+                    ${participants.map(({ name, role }) => `<span class="inline-flex items-center px-3 py-1 rounded-full bg-ddu-aqua/10 text-ddu-aqua text-sm font-medium">${name}${role ? `<span class="ml-2 text-xs text-ddu-aqua/80">${role}</span>` : ''}</span>`).join('')}
+                </div>
+            </div>`
+        : '';
+
+    const metadataHtml = metadataEntries.length
+        ? `<div class="space-y-2">
+                <h5 class="text-sm font-semibold text-gray-900">Metadata</h5>
+                <dl class="space-y-1 text-sm text-gray-600">
+                    ${metadataEntries.map(([key, value]) => `<div class="flex items-start justify-between gap-2"><dt class="font-medium text-gray-700">${key}</dt><dd class="text-right flex-1">${value}</dd></div>`).join('')}
+                </dl>
+            </div>`
+        : '';
+
+    return `
+        <div class="ddu-card shadow-none border border-gray-200">
+            <div class="p-4 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-lg font-semibold text-gray-900">Detalles del archivo .ju</h4>
+                </div>
+                ${badgesHtml}
+                ${sourceHtml}
+                ${participantsHtml}
+                ${metadataHtml}
+            </div>
+        </div>
+    `;
+}
+
 function renderTask(task) {
     const priority = task.prioridad ? `<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-ddu-lavanda/10 text-ddu-lavanda">${escapeHtml(task.prioridad)}</span>` : '';
     const dates = [];
@@ -567,6 +674,64 @@ function renderTask(task) {
     `;
 }
 
+function renderJuActionItem(item, index) {
+    if (!item || typeof item !== 'object') {
+        return '';
+    }
+
+    const title = escapeHtml(item.title || item.description || `Tarea ${index + 1}`);
+    const priority = item.priority ? `<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-ddu-lavanda/10 text-ddu-lavanda">${escapeHtml(item.priority)}</span>` : '';
+
+    const chips = [];
+    if (item.owner) {
+        chips.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-ddu-aqua/10 text-ddu-aqua text-xs font-medium">${escapeHtml(item.owner)}</span>`);
+    }
+    if (item.status) {
+        chips.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">${escapeHtml(item.status)}</span>`);
+    }
+
+    const dates = [];
+    if (item.start_date) {
+        dates.push(`Inicio: ${escapeHtml(formatDate(item.start_date))}`);
+    }
+    if (item.due_date) {
+        dates.push(`Entrega: ${escapeHtml(formatDate(item.due_date))}`);
+    }
+
+    const description = item.description ? `<p class="text-sm text-gray-600">${escapeHtml(item.description)}</p>` : '';
+
+    const progressValue = Number.isFinite(Number(item.progress)) ? Math.max(0, Math.min(100, Number(item.progress))) : null;
+    const progressHtml = Number.isFinite(progressValue)
+        ? `
+            <div>
+                <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+                    <span>Progreso</span>
+                    <span>${progressValue}%</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2">
+                    <div class="bg-ddu-lavanda h-2 rounded-full" style="width: ${progressValue}%"></div>
+                </div>
+            </div>
+        `
+        : '';
+
+    const chipsHtml = chips.length ? `<div class="flex flex-wrap gap-2 text-xs text-gray-500">${chips.join('')}</div>` : '';
+    const datesHtml = dates.length ? `<p class="text-xs text-gray-500">${dates.join(' • ')}</p>` : '';
+
+    return `
+        <div class="border border-gray-200 rounded-lg p-4 space-y-2">
+            <div class="flex items-center justify-between">
+                <h5 class="font-semibold text-gray-900">${title}</h5>
+                ${priority}
+            </div>
+            ${chipsHtml}
+            ${datesHtml}
+            ${description}
+            ${progressHtml}
+        </div>
+    `;
+}
+
 function buildSegmentsHtml(segments) {
     if (!Array.isArray(segments) || !segments.length) {
         return '<p class="text-sm text-gray-500">No se encontraron segmentos de transcripción.</p>';
@@ -577,8 +742,10 @@ function buildSegmentsHtml(segments) {
 
     segments.forEach((segment, index) => {
         const speaker = typeof segment.speaker === 'string' && segment.speaker.trim() !== '' ? segment.speaker.trim() : `Hablante ${index + 1}`;
-        const startSeconds = parseTimeToSeconds(segment.start);
-        const label = formatTimeLabel(segment.start);
+        const startValue = segment.start ?? segment.timestamp ?? segment.start_time ?? segment.from ?? null;
+        const labelSource = segment.label ?? startValue;
+        const startSeconds = parseTimeToSeconds(startValue);
+        const label = formatTimeLabel(labelSource ?? index * 60);
         const text = typeof segment.text === 'string' ? segment.text : '';
 
         if (speaker !== currentSpeaker) {
@@ -718,6 +885,84 @@ function formatDate(isoString) {
         });
     } catch (error) {
         return isoString;
+    }
+}
+
+function formatDurationLabel(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    if (typeof value === 'number' && !Number.isNaN(value)) {
+        if (value <= 0) {
+            return '';
+        }
+
+        if (value > 120) {
+            return formatSeconds(value);
+        }
+
+        return `${Math.round(value)} min`;
+    }
+
+    const stringValue = String(value).trim();
+    if (stringValue === '') {
+        return '';
+    }
+
+    if (/^\d+(\.\d+)?$/.test(stringValue)) {
+        const numeric = parseFloat(stringValue);
+        if (numeric > 120) {
+            return formatSeconds(numeric);
+        }
+
+        return `${Math.round(numeric)} min`;
+    }
+
+    return stringValue;
+}
+
+function formatMetadataValue(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    if (Array.isArray(value)) {
+        return value
+            .map(item => {
+                if (item === null || item === undefined) {
+                    return '';
+                }
+
+                if (typeof item === 'object') {
+                    return JSON.stringify(item);
+                }
+
+                return String(item);
+            })
+            .filter(Boolean)
+            .join(', ');
+    }
+
+    if (typeof value === 'object') {
+        try {
+            return JSON.stringify(value);
+        } catch (error) {
+            return String(value);
+        }
+    }
+
+    return String(value);
+}
+
+function formatJuSourceLabel(source) {
+    switch (source) {
+        case 'metadata':
+            return 'Metadatos de la reunión';
+        case 'filesystem':
+            return 'Archivo .ju del sistema de archivos';
+        default:
+            return '';
     }
 }
 
