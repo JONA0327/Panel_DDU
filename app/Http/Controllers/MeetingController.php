@@ -31,8 +31,8 @@ class MeetingController extends Controller
             'started_at' => optional($meeting->started_at)->toIso8601String(),
             'ended_at' => optional($meeting->ended_at)->toIso8601String(),
             'duration_minutes' => $meeting->duration_minutes,
-            'audio_url' => $meeting->audio_download_url,
-            'transcript_url' => $meeting->transcript_download_url,
+            'audio_url' => $meeting->audio_drive_id ? route('download.audio', $meeting) : null,
+            'transcript_url' => $meeting->transcript_drive_id ? route('download.ju', $meeting) : null,
             'containers' => $meeting->containers->map(fn ($container) => [
                 'id' => $container->id,
                 'name' => $container->name,
@@ -133,35 +133,4 @@ class MeetingController extends Controller
         return null;
     }
 
-    public function downloadJu(MeetingTranscription $meeting, Request $request)
-    {
-        $user = Auth::user();
-
-        // Verificar que el usuario tenga acceso a esta reunión
-        if ($meeting->user_id !== optional($user)->id && $meeting->username !== optional($user)->username) {
-            abort(403, 'No tienes permisos para acceder a esta reunión');
-        }
-
-        $juFilePath = $request->query('path');
-        if (!$juFilePath) {
-            abort(400, 'Ruta del archivo .ju no especificada');
-        }
-
-        // Resolver la ruta del archivo
-        $resolvedPath = $this->resolveFilePath($juFilePath);
-        if (!$resolvedPath) {
-            abort(404, 'Archivo .ju no encontrado');
-        }
-
-        // Verificar que es un archivo .ju
-        if (!str_ends_with(strtolower($resolvedPath), '.ju')) {
-            abort(400, 'El archivo especificado no es un archivo .ju válido');
-        }
-
-        // Generar nombre del archivo para descarga
-        $fileName = 'reunion_' . $meeting->id . '_' . ($meeting->meeting_name ? Str::slug($meeting->meeting_name) : 'sin_nombre') . '.ju';
-
-        // Retornar el archivo para descarga
-        return response()->download($resolvedPath, $fileName);
-    }
 }

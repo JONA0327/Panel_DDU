@@ -214,31 +214,35 @@
                                     {{ $meeting->status_label }}
                                 </span>
 
-                                @if ($juFilePath)
-                                    <div class="flex space-x-1">
-                                        @if ($meeting->audio_download_url)
-                                            <button type="button"
-                                                    class="btn btn-outline btn-xs"
-                                                    onclick="event.stopPropagation(); window.open('{{ $meeting->audio_download_url }}', '_blank')"
-                                                    title="Descargar audio">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M6.343 6.343a8 8 0 000 11.314m15.314-11.314a8 8 0 000 11.314" />
-                                                </svg>
-                                            </button>
-                                        @endif
-                                        <button type="button"
-                                                class="btn btn-outline btn-xs"
-                                                onclick="event.stopPropagation(); downloadJuFile({{ $meeting->id }}, '{{ $juFilePath }}')"
-                                                title="Descargar archivo .ju">
+                                <div class="flex space-x-1">
+                                    @if ($meeting->audio_drive_id)
+                                        <a href="{{ route('download.audio', $meeting) }}"
+                                           class="btn btn-outline btn-xs"
+                                           onclick="event.stopPropagation();"
+                                           title="Descargar audio">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M6.343 6.343a8 8 0 000 11.314m15.314-11.314a8 8 0 000 11.314" />
+                                            </svg>
+                                        </a>
+                                    @endif
+
+                                    @if ($meeting->transcript_drive_id)
+                                        <a href="{{ route('download.ju', $meeting) }}"
+                                           class="btn btn-outline btn-xs"
+                                           onclick="event.stopPropagation();"
+                                           title="Descargar archivo .ju">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                                             </svg>
-                                        </button>
+                                        </a>
+                                    @endif
+
+                                    @if ($juFilePath)
                                         <button type="button"
-                                                class="btn btn-primary btn-xs"
+                                                class="btn btn-primary btn-xs btn-ver-detalles"
                                                 data-meeting-id="{{ $meeting->id }}"
                                                 data-path="{{ $juFilePath }}"
-                                                data-audio-url="{{ $meeting->audio_download_url }}"
+                                                data-audio-url="{{ $meeting->audio_drive_id ? route('download.audio', $meeting) : '' }}"
                                                 data-title="{{ $meeting->meeting_name }}"
                                                 onclick="event.stopPropagation(); openMeetingModal({{ $meeting->id }})"
                                                 title="Ver transcripción">
@@ -247,8 +251,10 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                             </svg>
                                         </button>
-                                    </div>
-                                @else
+                                    @endif
+                                </div>
+
+                                @if (! $juFilePath)
                                     <span class="text-xs text-gray-400 italic">Transcripción no disponible</span>
                                 @endif
                             </div>
@@ -1134,22 +1140,5 @@ function closeMeetingModal() {
     }
 }
 
-// Función para descargar archivo .ju
-function downloadJuFile(meetingId, juFilePath) {
-    if (!juFilePath) {
-        alert('No hay archivo .ju disponible para esta reunión');
-        return;
-    }
-
-    console.log('Descargando archivo .ju:', juFilePath);
-
-    // Crear un enlace temporal para forzar la descarga
-    const link = document.createElement('a');
-    link.href = `/reuniones/${meetingId}/download-ju?path=${encodeURIComponent(juFilePath)}`;
-    link.download = `reunion_${meetingId}.ju`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
 </script>
 @endsection
