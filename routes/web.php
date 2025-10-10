@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,7 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified', 'ddu.member'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/reuniones', [App\Http\Controllers\DashboardController::class, 'reuniones'])->name('reuniones.index');
+    Route::get('/reuniones/{meeting}', [MeetingController::class, 'show'])->name('reuniones.show');
     Route::get('/asistente', [App\Http\Controllers\DashboardController::class, 'asistente'])->name('asistente.index');
 
     // Rutas para administración de miembros (solo administradores)
