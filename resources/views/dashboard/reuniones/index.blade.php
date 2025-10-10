@@ -240,19 +240,32 @@
 
 <!-- Modal para ver detalles de la reunión -->
 <div id="viewMeetingModal" class="modal" style="display: none;">
-    <div class="modal-content max-w-4xl">
-        <div class="modal-header">
-            <h3 class="modal-title" id="viewMeetingTitle">Detalles de la reunión</h3>
-            <button class="modal-close" onclick="closeMeetingModal()">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="modal-content max-w-6xl max-h-[90vh] overflow-hidden">
+        <div class="modal-header bg-gradient-to-r from-ddu-lavanda to-ddu-aqua text-white">
+            <div class="flex items-center">
+                <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <h3 class="modal-title text-xl font-semibold" id="viewMeetingTitle">Detalles de la reunión</h3>
+            </div>
+            <button class="modal-close text-white hover:text-gray-200 transition-colors" onclick="closeMeetingModal()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
         </div>
 
-        <div id="meetingModalBody" class="space-y-6">
-            <div class="py-12 text-center text-gray-500" id="meetingModalPlaceholder">
-                Selecciona una reunión para ver sus detalles.
+        <div id="meetingModalBody" class="p-6 overflow-y-auto max-h-[calc(90vh-80px)] space-y-6">
+            <div class="py-12 text-center text-gray-500 flex items-center justify-center" id="meetingModalPlaceholder">
+                <div class="text-center">
+                    <div class="animate-pulse mb-4">
+                        <svg class="w-16 h-16 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-lg font-medium text-gray-600">Selecciona una reunión para ver sus detalles</p>
+                    <p class="text-sm text-gray-400 mt-2">La información se cargará automáticamente</p>
+                </div>
             </div>
         </div>
     </div>
@@ -324,6 +337,71 @@
     </div>
 </div>
 
+<style>
+.animation-delay-200 {
+    animation-delay: 0.2s;
+}
+.animation-delay-400 {
+    animation-delay: 0.4s;
+}
+
+.modal {
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+    animation: slideIn 0.3s ease-out;
+    transform: translateY(0);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+}
+
+.modal-close:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+.segment-button {
+    transition: all 0.2s ease;
+}
+
+.segment-button:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+</style>
+
 <script>
 const meetingsShowBaseUrl = "{{ url('/reuniones') }}/";
 let meetingModalAbortController = null;
@@ -360,16 +438,44 @@ function hideCreateMeetingModal() {
 
 function closeMeetingModal() {
     const modal = document.getElementById('viewMeetingModal');
-    modal.style.display = 'none';
-    document.getElementById('viewMeetingTitle').textContent = 'Detalles de la reunión';
-    document.getElementById('meetingModalBody').innerHTML = '<div class="py-12 text-center text-gray-500" id="meetingModalPlaceholder">Selecciona una reunión para ver sus detalles.</div>';
+
+    // Agregar animación de salida
+    modal.style.animation = 'fadeOut 0.3s ease-out';
+    const modalContent = modal.querySelector('.modal-content');
+    modalContent.style.animation = 'slideOut 0.3s ease-out';
+
+    setTimeout(() => {
+        modal.style.display = 'none';
+        modal.style.animation = '';
+        modalContent.style.animation = '';
+    }, 300);
 
     if (meetingModalAbortController) {
         meetingModalAbortController.abort();
         meetingModalAbortController = null;
     }
 
-    meetingAudioElement = null;
+    if (meetingAudioElement) {
+        meetingAudioElement.pause();
+        meetingAudioElement = null;
+    }
+
+    const modalBody = document.getElementById('meetingModalBody');
+    const modalTitle = document.getElementById('viewMeetingTitle');
+    modalTitle.textContent = 'Detalles de la reunión';
+    modalBody.innerHTML = `
+        <div class="py-12 text-center text-gray-500 flex items-center justify-center">
+            <div class="text-center">
+                <div class="animate-pulse mb-4">
+                    <svg class="w-16 h-16 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <p class="text-lg font-medium text-gray-600">Selecciona una reunión para ver sus detalles</p>
+                <p class="text-sm text-gray-400 mt-2">La información se cargará automáticamente</p>
+            </div>
+        </div>
+    `;
 }
 
 function renderMeetingModal(payload) {
@@ -423,8 +529,28 @@ function renderMeetingModal(payload) {
     const segmentsHtml = buildSegmentsHtml(segmentsSource);
 
     const audioHtml = meeting.audio_url
-        ? `<div class="ddu-card shadow-none border border-gray-200"><div class="p-4 space-y-3"><div><h4 class="text-lg font-semibold text-gray-900">Grabación</h4><p class="text-sm text-gray-500">Escucha el audio completo o salta a los segmentos específicos.</p></div><audio id="meetingAudioPlayer" controls class="w-full rounded-lg" src="${escapeAttribute(meeting.audio_url)}"></audio></div></div>`
-        : '<div class="ddu-card shadow-none border border-gray-200"><div class="p-4 text-sm text-gray-500">No se encontró un audio asociado a esta reunión.</div></div>';
+        ? `<div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-indigo-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 12a1 1 0 01.117-.993l4-2.292c.359-.207.883-.207 1.242 0l4 2.292A1 1 0 0119 12v0a1 1 0 01-.883.993l-4 2.292c-.359.207-.883.207-1.242 0l-4-2.292A1 1 0 019 12z"></path>
+                        </svg>
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900">Grabación de audio</h4>
+                            <p class="text-sm text-gray-500">Escucha el audio completo o usa los segmentos para navegar</p>
+                        </div>
+                    </div>
+                    <audio id="meetingAudioPlayer" controls class="w-full rounded-lg bg-gray-50 border border-gray-200" src="${escapeAttribute(meeting.audio_url)}"></audio>
+                </div>
+            </div>`
+        : `<div class="bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
+                <div class="p-6 text-center">
+                    <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18 12M6 6l12 12"></path>
+                    </svg>
+                    <p class="text-sm text-gray-500">No se encontró un audio asociado a esta reunión</p>
+                </div>
+            </div>`;
 
     const transcriptLink = meeting.transcript_url
         ? `<a class="btn btn-sm btn-outline" href="${escapeAttribute(meeting.transcript_url)}" target="_blank" rel="noopener">Abrir transcripción original</a>`
@@ -440,13 +566,12 @@ function renderMeetingModal(payload) {
 
     modalBody.innerHTML = `
         <div class="space-y-6">
-            <div class="ddu-card shadow-none border border-gray-200">
-                <div class="p-4 space-y-3">
-                    <div class="flex flex-wrap items-center gap-3">${metaItems.join('')}</div>
-                    ${descriptionHtml}
-                    <div class="flex flex-wrap gap-2">${containersHtml}</div>
-                    ${transcriptLink ? `<div>${transcriptLink}</div>` : ''}
-                </div>
+            <!-- Información general de la reunión -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+                <div class="flex flex-wrap items-center gap-4 mb-4">${metaItems.join('')}</div>
+                ${descriptionHtml ? `<div class="mb-4">${descriptionHtml}</div>` : ''}
+                <div class="flex flex-wrap gap-2">${containersHtml}</div>
+                ${transcriptLink ? `<div class="mt-4">${transcriptLink}</div>` : ''}
             </div>
 
             ${decryptionBanner}
@@ -455,35 +580,72 @@ function renderMeetingModal(payload) {
 
             ${audioHtml}
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="ddu-card shadow-none border border-gray-200">
-                    <div class="p-4 space-y-3">
-                        <h4 class="text-lg font-semibold text-gray-900">Resumen</h4>
-                        ${summary}
+            <!-- Resumen y puntos clave -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <div class="p-6 space-y-4">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 text-ddu-lavanda mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <h4 class="text-lg font-semibold text-gray-900">Resumen ejecutivo</h4>
+                        </div>
+                        <div class="pl-9">
+                            ${summary}
+                        </div>
                     </div>
                 </div>
-                <div class="ddu-card shadow-none border border-gray-200">
-                    <div class="p-4 space-y-3">
-                        <h4 class="text-lg font-semibold text-gray-900">Puntos clave</h4>
-                        ${keyPoints}
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <div class="p-6 space-y-4">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 text-ddu-aqua mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            <h4 class="text-lg font-semibold text-gray-900">Puntos clave</h4>
+                        </div>
+                        <div class="pl-9">
+                            ${keyPoints}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="ddu-card shadow-none border border-gray-200">
-                <div class="p-4 space-y-4">
+            <!-- Tareas de seguimiento -->
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                        </svg>
+                        <h4 class="text-lg font-semibold text-gray-900">Tareas de seguimiento</h4>
+                    </div>
+                    <div class="pl-9">
+                        ${tasksHtml}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transcripción segmentada -->
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div class="p-6 space-y-4">
                     <div class="flex items-center justify-between">
-                        <h4 class="text-lg font-semibold text-gray-900">Transcripción segmentada</h4>
-                        <p class="text-xs text-gray-500">Haz clic en un segmento para reproducirlo.</p>
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m3 0H4a2 2 0 00-2 2v11a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11h4M10 15h4"></path>
+                            </svg>
+                            <h4 class="text-lg font-semibold text-gray-900">Transcripción segmentada</h4>
+                        </div>
+                        <p class="text-xs text-gray-500 flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+                            </svg>
+                            Haz clic en un segmento para reproducirlo
+                        </p>
                     </div>
-                    ${segmentsHtml}
-                </div>
-            </div>
-
-            <div class="ddu-card shadow-none border border-gray-200">
-                <div class="p-4 space-y-3">
-                    <h4 class="text-lg font-semibold text-gray-900">Tareas de seguimiento</h4>
-                    ${tasksHtml}
+                    <div class="pl-9 max-h-96 overflow-y-auto">
+                        ${segmentsHtml}
+                    </div>
                 </div>
             </div>
         </div>
@@ -757,10 +919,15 @@ function buildSegmentsHtml(segments) {
         }
 
         html += `
-            <button type="button" class="w-full text-left border border-gray-200 rounded-lg px-3 py-2 hover:bg-ddu-lavanda/10 focus:outline-none focus:ring-2 focus:ring-ddu-lavanda" data-start-seconds="${Number.isFinite(startSeconds) ? startSeconds : ''}" onclick="seekSegment(this)">
-                <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
-                    <span>${escapeHtml(label)}</span>
-                    <span>Segmento</span>
+            <button type="button" class="segment-button w-full text-left border border-gray-200 rounded-lg px-4 py-3 hover:bg-ddu-lavanda/10 hover:border-ddu-lavanda/30 focus:outline-none focus:ring-2 focus:ring-ddu-lavanda focus:border-ddu-lavanda" data-start-seconds="${Number.isFinite(startSeconds) ? startSeconds : ''}" onclick="seekSegment(this)">
+                <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
+                    <span class="font-medium">${escapeHtml(label)}</span>
+                    <span class="flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1"></path>
+                        </svg>
+                        Reproducir
+                    </span>
                 </div>
                 <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(text)}</p>
             </button>
@@ -1043,7 +1210,39 @@ function openMeetingModal(meetingId) {
 
     modal.style.display = 'flex';
     modalTitle.textContent = 'Cargando reunión...';
-    modalBody.innerHTML = '<div class="py-12 text-center text-gray-500"><div class="animate-spin inline-block w-6 h-6 border-4 border-ddu-lavanda border-t-transparent rounded-full mr-2"></div>Desencriptando archivo .ju y cargando detalles...</div>';
+    modalBody.innerHTML = `
+        <div class="py-16 text-center">
+            <div class="flex justify-center mb-6">
+                <div class="relative">
+                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-ddu-lavanda border-t-transparent"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-ddu-lavanda" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Procesando reunión</h3>
+            <p class="text-gray-500 max-w-md mx-auto">
+                Desencriptando archivo .ju y cargando todos los detalles de la reunión.
+                Esto puede tardar unos momentos...
+            </p>
+            <div class="mt-6 flex justify-center space-x-4 text-xs text-gray-400">
+                <span class="flex items-center">
+                    <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                    Extrayendo información
+                </span>
+                <span class="flex items-center">
+                    <div class="w-2 h-2 bg-blue-400 rounded-full mr-2 animate-pulse animation-delay-200"></div>
+                    Procesando contenido
+                </span>
+                <span class="flex items-center">
+                    <div class="w-2 h-2 bg-purple-400 rounded-full mr-2 animate-pulse animation-delay-400"></div>
+                    Cargando transcripción
+                </span>
+            </div>
+        </div>
+    `;
     meetingAudioElement = null;
 
     if (meetingModalAbortController) {
@@ -1073,8 +1272,33 @@ function openMeetingModal(meetingId) {
                 return;
             }
 
-            modalTitle.textContent = 'Detalles de la reunión';
-            modalBody.innerHTML = `<div class="py-12 text-center text-red-500">${escapeHtml(error.message || 'Ocurrió un error al obtener la información.')}</div>`;
+            modalTitle.textContent = 'Error al cargar reunión';
+            modalBody.innerHTML = `
+                <div class="py-16 text-center">
+                    <div class="flex justify-center mb-6">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">No se pudo cargar la reunión</h3>
+                    <p class="text-gray-500 max-w-md mx-auto mb-6">
+                        ${escapeHtml(error.message || 'Ocurrió un error inesperado al obtener la información de la reunión.')}
+                    </p>
+                    <div class="flex justify-center space-x-3">
+                        <button onclick="openMeetingModal(${currentMeetingId || 'null'})" class="btn btn-primary">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Reintentar
+                        </button>
+                        <button onclick="closeMeetingModal()" class="btn btn-outline">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            `;
         });
 }
 </script>

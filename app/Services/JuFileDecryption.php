@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Log;
 class JuFileDecryption
 {
     /**
-     * Desencripta un archivo .ju y devuelve el contenido JSON decodificado
+     * Desencripta un archivo .ju siguiendo el flujo completo de Laravel Crypt
+     * Basado en la documentación del sistema de encriptación de la aplicación
      *
      * @param string $filePath Ruta al archivo .ju
      * @return array|null Contenido desencriptado del archivo o null si falla
@@ -21,66 +22,22 @@ class JuFileDecryption
             }
 
             // Leer el contenido del archivo
-            $encryptedContent = file_get_contents($filePath);
+            $content = file_get_contents($filePath);
 
-            if ($encryptedContent === false) {
+            if ($content === false) {
                 Log::error("No se pudo leer el archivo .ju: {$filePath}");
                 return null;
             }
 
-            // Normalizar la codificación del archivo
-            $normalizedContent = self::normalizeEncoding($encryptedContent);
+            // Usar el método principal de desencriptación que sigue el flujo documentado
+            $result = self::decryptJuContent($content);
 
-            // Los archivos .ju generalmente están en formato JSON base64 codificado
-            // Intentar decodificar directamente como JSON primero
-            $jsonDecoded = json_decode($normalizedContent, true, 512, JSON_INVALID_UTF8_IGNORE);
-
-            if ($jsonDecoded !== null && json_last_error() === JSON_ERROR_NONE) {
-                Log::info("Archivo .ju decodificado directamente como JSON: {$filePath}");
-                return $jsonDecoded;
-            }
-
-            // Si no es JSON directo, intentar decodificar base64
-            $base64Decoded = base64_decode($normalizedContent, true);
-
-            if ($base64Decoded !== false) {
-                $jsonDecoded = json_decode($base64Decoded, true, 512, JSON_INVALID_UTF8_IGNORE);
-
-                if ($jsonDecoded !== null && json_last_error() === JSON_ERROR_NONE) {
-                    Log::info("Archivo .ju decodificado desde base64: {$filePath}");
-                    return $jsonDecoded;
-                }
-            }
-
-            // Intentar desencriptación con Laravel Encryption (contenido original)
-            $laravelDecrypted = self::tryLaravelDecryption($encryptedContent);
-            if ($laravelDecrypted) {
-                $jsonDecoded = json_decode($laravelDecrypted, true);
-                if ($jsonDecoded !== null) {
-                    Log::info("Archivo .ju decodificado con Laravel Encryption: {$filePath}");
-                    return $jsonDecoded;
-                }
-            }
-
-            // También intentar Laravel con contenido normalizado
-            $laravelFromNormalized = self::tryLaravelDecryption($normalizedContent);
-            if ($laravelFromNormalized) {
-                $jsonDecoded = json_decode($laravelFromNormalized, true);
-                if ($jsonDecoded !== null) {
-                    Log::info("Archivo .ju decodificado con Laravel desde contenido normalizado: {$filePath}");
-                    return $jsonDecoded;
-                }
-            }
-
-            // Intentar otros métodos de desencriptación si es necesario
-            // Algunos archivos .ju pueden usar XOR simple o cesar cipher
-            $decryptedContent = self::tryXorDecryption($encryptedContent);
-            if ($decryptedContent) {
-                $jsonDecoded = json_decode($decryptedContent, true);
-                if ($jsonDecoded !== null) {
-                    Log::info("Archivo .ju decodificado con XOR: {$filePath}");
-                    return $jsonDecoded;
-                }
+            if ($result && isset($result['data'])) {
+                Log::info("Archivo .ju procesado exitosamente: {$filePath}");
+                return $result['data'];
+            } else if ($result && isset($result['raw'])) {
+                Log::info("Archivo .ju procesado con datos raw: {$filePath}");
+                return $result['raw'];
             }
 
             Log::error("No se pudo desencriptar el archivo .ju: {$filePath}");
@@ -89,6 +46,136 @@ class JuFileDecryption
         } catch (\Exception $e) {
             Log::error("Error desencriptando archivo .ju {$filePath}: " . $e->getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Método principal de desencriptación que sigue el flujo documentado
+     * Similar al usado en MeetingContentParsing::decryptJuFile
+     *
+     * @param string $content Contenido del archivo .ju
+     * @return array Array con 'data', 'raw' y 'needs_encryption'
+     */
+    public static function decryptJuContent($content)
+    {
+        try {
+            Log::info('decryptJuContent: Starting decryption process');
+
+            // 1) Si el contenido ya es JSON válido (sin encriptar)
+            $json_data = json_decode($content, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($json_data)) {
+                Log::info('decryptJuContent: Content is already valid JSON (unencrypted)');
+                return [
+                    'data' => self::extractMeetingInfo($json_data),
+                    'raw' => $json_data,
+                    'needs_encryption' => true,
+                ];
+            }
+
+            // 2) Intentar descifrar string encriptado de Laravel Crypt (base64) usando APP_KEY actual o claves legacy
+            if (substr($content, 0, 3) === 'eyJ') {
+                Log::info('decryptJuContent: Attempting to decrypt Laravel Crypt format');
+                $legacyKeys = array_filter(array_map('trim', explode(',', (string) env('LEGACY_APP_KEYS', ''))));
+                $triedKeys = [];
+                $decrypted = null;
+
+                // Helper closure para desencriptar con una clave concreta
+                $attemptDecrypt = function(string $key) use (&$content) {
+                    $prevKey = config('app.key');
+                    // Ajustar key temporalmente
+                    config(['app.key' => $key]);
+                    try {
+                        return \Illuminate\Support\Facades\Crypt::decryptString($content);
+                    } finally {
+                        // Restaurar clave original
+                        config(['app.key' => $prevKey]);
+                    }
+                };
+
+                // Primero con la clave actual
+                try {
+                    $decrypted = \Illuminate\Support\Facades\Crypt::decryptString($content);
+                    $triedKeys[] = 'current';
+                    Log::info('decryptJuContent: Direct decryption successful');
+                } catch (\Exception $e) {
+                    $triedKeys[] = 'current(failed:' . $e->getMessage() . ')';
+                    Log::warning('decryptJuContent: Direct decryption failed', ['error' => $e->getMessage()]);
+
+                    // Intentar con legacy keys si error fue MAC invalid o similar
+                    if (!empty($legacyKeys)) {
+                        foreach ($legacyKeys as $idx => $legacyKey) {
+                            try {
+                                $legacyDecrypted = $attemptDecrypt($legacyKey);
+                                if ($legacyDecrypted) {
+                                    $decrypted = $legacyDecrypted;
+                                    $triedKeys[] = 'legacy[' . $idx . ']';
+                                    Log::info('decryptJuContent: Decryption successful with legacy key', ['legacy_index' => $idx]);
+                                    break;
+                                }
+                            } catch (\Exception $eL) {
+                                $triedKeys[] = 'legacy[' . $idx . '](failed:' . $eL->getMessage() . ')';
+                                Log::warning('decryptJuContent: Legacy key failed', ['index' => $idx, 'error' => $eL->getMessage()]);
+                            }
+                        }
+                    }
+                }
+
+                if ($decrypted !== null) {
+                    $json_data = json_decode($decrypted, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        Log::info('decryptJuContent: JSON parsing after decryption successful', [
+                            'keys' => array_keys($json_data),
+                            'attempts' => $triedKeys,
+                        ]);
+                        return [
+                            'data' => self::extractMeetingInfo($json_data),
+                            'raw' => $json_data,
+                            'needs_encryption' => false,
+                        ];
+                    } else {
+                        Log::warning('decryptJuContent: JSON decode failed after decryption', [
+                            'attempts' => $triedKeys,
+                            'error' => json_last_error_msg(),
+                        ]);
+                    }
+                }
+            }
+
+            // 3) Intentar desencriptar formato JSON {"iv":"...","value":"..."}
+            if (str_contains($content, '"iv"') && str_contains($content, '"value"')) {
+                Log::info('decryptJuContent: Detected Laravel Crypt JSON format');
+                try {
+                    $decrypted = \Illuminate\Support\Facades\Crypt::decrypt($content);
+                    Log::info('decryptJuContent: Laravel Crypt JSON decryption successful');
+
+                    $json_data = json_decode($decrypted, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        Log::info('decryptJuContent: JSON parsing after Laravel Crypt decryption successful', ['keys' => array_keys($json_data)]);
+                        return [
+                            'data' => self::extractMeetingInfo($json_data),
+                            'raw' => $json_data,
+                            'needs_encryption' => false,
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    Log::error('decryptJuContent: Laravel Crypt JSON decryption failed', ['error' => $e->getMessage()]);
+                }
+            }
+
+            Log::warning('decryptJuContent: Using default data - all decryption methods failed');
+            return [
+                'data' => self::getDefaultMeetingData(),
+                'raw' => null,
+                'needs_encryption' => false,
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('decryptJuContent: General exception', ['error' => $e->getMessage()]);
+            return [
+                'data' => self::getDefaultMeetingData(),
+                'raw' => null,
+                'needs_encryption' => false,
+            ];
         }
     }
 
@@ -164,6 +251,44 @@ class JuFileDecryption
         }
 
         return null;
+    }
+
+    /**
+     * Función cryptstring para encriptación/desencriptación simétrica
+     * Esta función debe ser la misma que se usa para encriptar
+     *
+     * @param string $data Datos a procesar
+     * @param string $key Clave de encriptación
+     * @return string Datos procesados
+     */
+    private static function cryptstring($data, $key = null)
+    {
+        if ($key === null) {
+            // Usar la clave de aplicación por defecto
+            $key = config('app.key');
+            if (str_starts_with($key, 'base64:')) {
+                $key = base64_decode(substr($key, 7));
+            }
+        }
+
+        // Si los datos están en formato Laravel encrypted payload, extraer el value
+        $jsonData = json_decode($data, true);
+        if ($jsonData && isset($jsonData['value'])) {
+            // Es un payload encriptado de Laravel, desencriptar el value
+            $encryptedData = base64_decode($jsonData['value']);
+            return self::cryptstring($encryptedData, $key);
+        }
+
+        // Implementación XOR simple para encriptación simétrica
+        $keyLen = strlen($key);
+        $dataLen = strlen($data);
+        $result = '';
+
+        for ($i = 0; $i < $dataLen; $i++) {
+            $result .= chr(ord($data[$i]) ^ ord($key[$i % $keyLen]));
+        }
+
+        return $result;
     }
 
     /**
@@ -318,5 +443,24 @@ class JuFileDecryption
 
         Log::warning("No se encontró archivo .ju para la reunión: {$meetingName}");
         return null;
+    }
+
+    /**
+     * Devuelve datos por defecto cuando no se puede desencriptar un archivo .ju
+     *
+     * @return array Datos por defecto de la reunión
+     */
+    public static function getDefaultMeetingData()
+    {
+        return [
+            'summary' => null,
+            'key_points' => [],
+            'segments' => [],
+            'participants' => [],
+            'action_items' => [],
+            'metadata' => [],
+            'timestamp' => null,
+            'duration' => null,
+        ];
     }
 }

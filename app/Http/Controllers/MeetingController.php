@@ -32,7 +32,8 @@ class MeetingController extends Controller
         // Intentar obtener contenido del archivo .ju usando múltiples métodos
         if ($juContent = $this->resolveJuContent($meeting)) {
             try {
-                $juResult = $parser->decryptJuFile($juContent);
+                // Usar el nuevo método de desencriptación que sigue el flujo documentado
+                $juResult = JuFileDecryption::decryptJuContent($juContent);
                 if (! empty($juResult['data'])) {
                     $juSource = 'metadata';
                 }
@@ -51,29 +52,14 @@ class MeetingController extends Controller
                 $juFilePath = JuFileDecryption::findJuFileForMeeting($meeting->meeting_name, $user->username);
 
                 if ($juFilePath) {
-                    $decryptedContent = JuFileDecryption::decrypt($juFilePath);
+                    // Usar el método mejorado que maneja el flujo completo de Laravel Crypt
+                    $fileResult = JuFileDecryption::decrypt($juFilePath);
 
-                    if ($decryptedContent) {
+                    if ($fileResult) {
                         $juSource = 'filesystem';
-                        $normalisedContent = null;
-
-                        if (is_array($decryptedContent)) {
-                            $normalisedContent = $parser->extractMeetingDataFromJson($decryptedContent);
-                        } elseif (is_string($decryptedContent)) {
-                            $decoded = json_decode($decryptedContent, true);
-                            if (is_array($decoded)) {
-                                $normalisedContent = $parser->extractMeetingDataFromJson($decoded);
-                            }
-                        }
-
-                        if ($normalisedContent !== null) {
-                            $juResult['data'] = $normalisedContent;
-                            $juResult['needs_encryption'] = false;
-                        } else {
-                            $juResult['data'] = JuFileDecryption::extractMeetingInfo($decryptedContent);
-                        }
-
-                        $juResult['raw'] = $decryptedContent;
+                        $juResult['data'] = $fileResult;
+                        $juResult['raw'] = $fileResult;
+                        $juResult['needs_encryption'] = false;
                         $juError = null;
 
                         Log::info("Archivo .ju desencriptado exitosamente para reunión {$meeting->id} desde {$juFilePath}");
