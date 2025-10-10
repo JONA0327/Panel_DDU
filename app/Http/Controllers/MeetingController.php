@@ -27,11 +27,15 @@ class MeetingController extends Controller
 
         $juResult = ['data' => null, 'needs_encryption' => false];
         $juError = null;
+        $juSource = null;
 
         // Intentar obtener contenido del archivo .ju usando múltiples métodos
         if ($juContent = $this->resolveJuContent($meeting)) {
             try {
                 $juResult = $parser->decryptJuFile($juContent);
+                if (! empty($juResult['data'])) {
+                    $juSource = 'metadata';
+                }
             } catch (\Throwable $exception) {
                 $juError = $exception->getMessage();
                 Log::warning('Unable to parse .ju file for meeting', [
@@ -42,7 +46,7 @@ class MeetingController extends Controller
         }
 
         // Si no se pudo obtener desde metadata, buscar archivo .ju en el sistema
-        if (!$juResult['data'] && $user->username) {
+        if (! $juResult['data'] && $user->username) {
             try {
                 $juFilePath = JuFileDecryption::findJuFileForMeeting($meeting->meeting_name, $user->username);
 
@@ -50,7 +54,26 @@ class MeetingController extends Controller
                     $decryptedContent = JuFileDecryption::decrypt($juFilePath);
 
                     if ($decryptedContent) {
-                        $juResult['data'] = JuFileDecryption::extractMeetingInfo($decryptedContent);
+                        $juSource = 'filesystem';
+                        $normalisedContent = null;
+
+                        if (is_array($decryptedContent)) {
+                            $normalisedContent = $parser->extractMeetingDataFromJson($decryptedContent);
+                        } elseif (is_string($decryptedContent)) {
+                            $decoded = json_decode($decryptedContent, true);
+                            if (is_array($decoded)) {
+                                $normalisedContent = $parser->extractMeetingDataFromJson($decoded);
+                            }
+                        }
+
+                        if ($normalisedContent !== null) {
+                            $juResult['data'] = $normalisedContent;
+                            $juResult['needs_encryption'] = false;
+                        } else {
+                            $juResult['data'] = JuFileDecryption::extractMeetingInfo($decryptedContent);
+                        }
+
+                        $juResult['raw'] = $decryptedContent;
                         $juError = null;
 
                         Log::info("Archivo .ju desencriptado exitosamente para reunión {$meeting->id} desde {$juFilePath}");
@@ -92,11 +115,39 @@ class MeetingController extends Controller
             ];
         })->values();
 
+        if ($tasks->isEmpty()) {
+            $juActionItems = collect(data_get($juResult, 'data.action_items', []));
+
+            if ($juActionItems->isNotEmpty()) {
+                $tasks = $juActionItems->map(function ($item, $index) {
+                    $title = Arr::get($item, 'title')
+                        ?? Arr::get($item, 'description')
+                        ?? 'Tarea '.($index + 1);
+
+                    return [
+                        'id' => 'ju-'.$index,
+                        'tarea' => $title,
+                        'prioridad' => Arr::get($item, 'priority'),
+                        'fecha_inicio' => Arr::get($item, 'start_date'),
+                        'fecha_limite' => Arr::get($item, 'due_date'),
+                        'descripcion' => Arr::get($item, 'description'),
+                        'progreso' => Arr::get($item, 'progress'),
+                        'responsable' => Arr::get($item, 'owner'),
+                    ];
+                })->values();
+            }
+        }
+
+        $juActionItems = collect(data_get($juResult, 'data.action_items', []))->values()->all();
+
         return response()->json([
             'meeting' => $meetingData,
             'ju' => $juResult['data'],
             'ju_needs_encryption' => $juResult['needs_encryption'] ?? false,
             'ju_error' => $juError,
+            'ju_source' => $juSource,
+            'ju_action_items' => $juActionItems,
+            'ju_raw' => $juResult['raw'] ?? null,
             'tasks' => $tasks,
         ]);
     }
