@@ -162,8 +162,13 @@
 
             <div class="divide-y divide-gray-200">
                 @forelse ($meetings as $meeting)
+                    @php
+                        $juFilePath = data_get($meeting->metadata, 'ju_local_path')
+                            ?? data_get($meeting->metadata, 'ju_file_path')
+                            ?? data_get($meeting->metadata, 'ju_path');
+                    @endphp
                     <div class="p-6 hover:bg-gray-50 transition-colors">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                             <div class="flex-1">
                                 <div class="flex items-center space-x-3">
                                     <div class="w-12 h-12 bg-gradient-to-r from-ddu-lavanda to-ddu-aqua rounded-lg flex items-center justify-center">
@@ -206,9 +211,22 @@
                                 </div>
                             </div>
 
-                            <span class="px-3 py-1 text-xs font-medium rounded-full {{ $meeting->status_badge_color }}">
-                                {{ $meeting->status_label }}
-                            </span>
+                            <div class="flex flex-col items-start sm:items-end gap-3">
+                                <span class="px-3 py-1 text-xs font-medium rounded-full {{ $meeting->status_badge_color }}">
+                                    {{ $meeting->status_label }}
+                                </span>
+                                @if ($juFilePath)
+                                    <button type="button"
+                                            class="btn btn-outline btn-sm btn-ver-detalles"
+                                            data-path="{{ $juFilePath }}"
+                                            data-audio-url="{{ $meeting->audio_download_url }}"
+                                            data-title="{{ $meeting->meeting_name }}">
+                                        Ver detalles
+                                    </button>
+                                @else
+                                    <span class="text-xs text-gray-400 italic">Transcripción no disponible</span>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 @empty
@@ -222,6 +240,37 @@
                 @endforelse
             </div>
         </div>
+    <!-- Modal de detalles de la reunión -->
+    <div id="reunionModal" class="ju-modal modal-oculto">
+        <div class="ju-modal-backdrop"></div>
+        <div class="modal-contenido">
+            <button id="cerrarModal" type="button" class="modal-cerrar" aria-label="Cerrar modal">
+                &times;
+            </button>
+            <div class="space-y-6">
+                <div>
+                    <h2 id="modalTitulo" class="text-2xl font-semibold text-gray-900">Reunión</h2>
+                    <p id="modalResumen" class="mt-2 text-gray-600">Selecciona una reunión para ver los detalles.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Puntos clave</h3>
+                    <ul id="modalPuntosClave" class="mt-3 space-y-2 list-disc list-inside text-gray-700"></ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Transcripción</h3>
+                    <div id="modalSegmentos" class="mt-3 space-y-3 text-gray-700"></div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Audio</h3>
+                    <p id="modalAudioStatus" class="text-sm text-gray-500">Selecciona una reunión para cargar el audio.</p>
+                    <audio id="modalAudio" controls class="w-full mt-3 hidden"></audio>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal para crear reunión -->
@@ -291,6 +340,63 @@
 </div>
 
 <style>
+.ju-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.ju-modal.modal-oculto {
+    display: none;
+}
+
+.ju-modal .ju-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.45);
+    backdrop-filter: blur(4px);
+}
+
+.ju-modal .modal-contenido {
+    position: relative;
+    background: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(30, 64, 175, 0.35);
+    padding: 2rem;
+    width: 100%;
+    max-width: 42rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideIn 0.3s ease-out;
+}
+
+.modal-oculto .modal-contenido {
+    animation: slideOut 0.2s ease-in;
+}
+
+.modal-cerrar {
+    position: absolute;
+    top: 1rem;
+    right: 1.25rem;
+    font-size: 2rem;
+    color: #4b5563;
+    line-height: 1;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.modal-cerrar:hover {
+    transform: scale(1.1);
+    color: #111827;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
 .animation-delay-200 {
     animation-delay: 0.2s;
 }
@@ -350,6 +456,10 @@
 <script>
 function showCreateMeetingModal() {
     const modal = document.getElementById('createMeetingModal');
+    if (!modal) {
+        return;
+    }
+
     modal.style.display = 'flex';
 
     const dateInput = document.querySelector('input[name="date"]');
@@ -361,6 +471,10 @@ function showCreateMeetingModal() {
 
 function hideCreateMeetingModal() {
     const modal = document.getElementById('createMeetingModal');
+    if (!modal) {
+        return;
+    }
+
     modal.style.display = 'none';
 
     const form = document.getElementById('createMeetingForm');
@@ -369,28 +483,308 @@ function hideCreateMeetingModal() {
     }
 }
 
-document.getElementById('createMeetingForm').addEventListener('submit', function(event) {
-    event.preventDefault();
+document.addEventListener('DOMContentLoaded', () => {
+    const detailsRoute = "{{ route('reuniones.showDetails') }}";
 
-    const formData = new FormData(this);
-    const data = Object.fromEntries(formData.entries());
+    const createMeetingForm = document.getElementById('createMeetingForm');
+    if (createMeetingForm) {
+        createMeetingForm.addEventListener('submit', function (event) {
+            event.preventDefault();
 
-    console.log('Datos de la reunión:', data);
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
 
-    hideCreateMeetingModal();
-    alert('Reunión creada exitosamente');
-});
+            console.log('Datos de la reunión:', data);
 
-document.getElementById('searchInput').addEventListener('input', function() {
-    console.log('Buscar:', this.value);
-});
+            hideCreateMeetingModal();
+            alert('Reunión creada exitosamente');
+        });
+    }
 
-document.getElementById('statusFilter').addEventListener('change', function() {
-    console.log('Filtrar por estado:', this.value);
-});
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            console.log('Buscar:', this.value);
+        });
+    }
 
-document.getElementById('dateFilter').addEventListener('change', function() {
-    console.log('Filtrar por fecha:', this.value);
+    const statusFilter = document.getElementById('statusFilter');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function () {
+            console.log('Filtrar por estado:', this.value);
+        });
+    }
+
+    const dateFilter = document.getElementById('dateFilter');
+    if (dateFilter) {
+        dateFilter.addEventListener('change', function () {
+            console.log('Filtrar por fecha:', this.value);
+        });
+    }
+
+    const modal = document.getElementById('reunionModal');
+    if (!modal) {
+        return;
+    }
+
+    const closeModalBtn = document.getElementById('cerrarModal');
+    const modalTitle = document.getElementById('modalTitulo');
+    const modalResumen = document.getElementById('modalResumen');
+    const modalPuntosClave = document.getElementById('modalPuntosClave');
+    const modalSegmentos = document.getElementById('modalSegmentos');
+    const modalAudio = document.getElementById('modalAudio');
+    const modalAudioStatus = document.getElementById('modalAudioStatus');
+
+    const cleanupAudio = () => {
+        if (!modalAudio) {
+            return;
+        }
+
+        try {
+            modalAudio.pause();
+        } catch (error) {
+            console.warn('No se pudo pausar el audio:', error);
+        }
+
+        if (modalAudio.dataset.objectUrl) {
+            URL.revokeObjectURL(modalAudio.dataset.objectUrl);
+            delete modalAudio.dataset.objectUrl;
+        }
+
+        modalAudio.removeAttribute('src');
+        modalAudio.load();
+        modalAudio.classList.add('hidden');
+    };
+
+    const resetModalContent = () => {
+        modalResumen.textContent = 'Selecciona una reunión para ver los detalles.';
+        modalPuntosClave.innerHTML = '';
+        modalSegmentos.innerHTML = '';
+        modalAudioStatus.textContent = 'Selecciona una reunión para cargar el audio.';
+        cleanupAudio();
+    };
+
+    const closeModal = () => {
+        if (modal.classList.contains('modal-oculto')) {
+            return;
+        }
+
+        modal.classList.add('modal-oculto');
+        document.body.classList.remove('modal-open');
+        resetModalContent();
+    };
+
+    const formatTime = (value) => {
+        if (value === undefined || value === null || value === '') {
+            return null;
+        }
+
+        const seconds = Number(value);
+        if (!Number.isFinite(seconds)) {
+            return null;
+        }
+
+        const minutesPart = Math.floor(seconds / 60);
+        const secondsPart = Math.floor(seconds % 60);
+
+        return `${String(minutesPart).padStart(2, '0')}:${String(secondsPart).padStart(2, '0')}`;
+    };
+
+    const fillKeyPoints = (points) => {
+        modalPuntosClave.innerHTML = '';
+
+        if (!Array.isArray(points) || points.length === 0) {
+            modalPuntosClave.innerHTML = '<li>No se encontraron puntos clave.</li>';
+            return;
+        }
+
+        points.forEach((point) => {
+            const item = document.createElement('li');
+            item.className = 'pl-1';
+
+            let description = '';
+            if (typeof point === 'string') {
+                description = point;
+            } else if (point && typeof point === 'object') {
+                description = point.description || point.text || point.title || point.summary || '';
+
+                if (!description) {
+                    const firstString = Object.values(point).find((value) => typeof value === 'string');
+                    description = firstString || '';
+                }
+            }
+
+            item.textContent = description || 'Punto sin descripción';
+            modalPuntosClave.appendChild(item);
+        });
+    };
+
+    const fillSegments = (segments) => {
+        modalSegmentos.innerHTML = '';
+
+        if (!Array.isArray(segments) || segments.length === 0) {
+            modalSegmentos.innerHTML = '<p class="text-sm text-gray-500">No hay transcripción disponible.</p>';
+            return;
+        }
+
+        segments.forEach((segment) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'p-4 bg-gray-50 rounded-lg border border-gray-100';
+
+            const header = document.createElement('div');
+            header.className = 'flex flex-wrap items-center justify-between text-sm text-gray-500';
+
+            const speaker = document.createElement('span');
+            speaker.className = 'font-medium text-gray-700';
+            const speakerName = (segment && typeof segment === 'object')
+                ? (segment.speaker || segment.expositor || segment.name || 'Hablante')
+                : 'Hablante';
+            speaker.textContent = speakerName;
+
+            header.appendChild(speaker);
+
+            if (segment && typeof segment === 'object') {
+                const start = formatTime(segment.start ?? segment.start_time ?? segment.inicio);
+                const end = formatTime(segment.end ?? segment.end_time ?? segment.fin);
+
+                if (start || end) {
+                    const time = document.createElement('span');
+                    time.textContent = start && end ? `${start} - ${end}` : (start || end || '');
+                    header.appendChild(time);
+                }
+            }
+
+            const paragraph = document.createElement('p');
+            paragraph.className = 'mt-2 text-gray-700 whitespace-pre-line';
+            const segmentText = (segment && typeof segment === 'object')
+                ? (segment.text || segment.content || segment.sentence || segment.fragment || '')
+                : String(segment || '');
+            paragraph.textContent = segmentText || 'Sin contenido para este segmento.';
+
+            wrapper.appendChild(header);
+            wrapper.appendChild(paragraph);
+
+            modalSegmentos.appendChild(wrapper);
+        });
+    };
+
+    const loadAudio = (audioUrl) => {
+        if (!modalAudio) {
+            return;
+        }
+
+        cleanupAudio();
+
+        if (!audioUrl) {
+            modalAudioStatus.textContent = 'No hay audio disponible para esta reunión.';
+            return;
+        }
+
+        modalAudioStatus.textContent = 'Descargando audio...';
+
+        fetch(audioUrl)
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Respuesta inesperada al obtener el audio');
+                }
+
+                return response.blob();
+            })
+            .then((blob) => {
+                const objectUrl = URL.createObjectURL(blob);
+                modalAudio.dataset.objectUrl = objectUrl;
+                modalAudio.src = objectUrl;
+                modalAudio.classList.remove('hidden');
+                modalAudioStatus.textContent = 'Audio listo para reproducir.';
+            })
+            .catch((error) => {
+                cleanupAudio();
+                modalAudioStatus.textContent = 'No fue posible cargar el audio.';
+                console.error('Error al cargar el audio:', error);
+            });
+    };
+
+    const openModal = () => {
+        modal.classList.remove('modal-oculto');
+        document.body.classList.add('modal-open');
+    };
+
+    const buttons = document.querySelectorAll('.btn-ver-detalles');
+    buttons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const filePath = button.getAttribute('data-path') || '';
+            const meetingTitle = button.getAttribute('data-title') || 'Reunión';
+            const initialAudioUrl = button.getAttribute('data-audio-url') || '';
+
+            modalTitle.textContent = meetingTitle;
+            modalResumen.textContent = 'Cargando...';
+            modalPuntosClave.innerHTML = '';
+            modalSegmentos.innerHTML = '';
+            modalAudioStatus.textContent = initialAudioUrl ? 'Preparando el audio...' : 'No hay audio disponible para esta reunión.';
+            cleanupAudio();
+
+            openModal();
+
+            if (!filePath) {
+                modalResumen.textContent = 'No se encontró la transcripción asociada a esta reunión.';
+                return;
+            }
+
+            const requestUrl = new URL(detailsRoute, window.location.origin);
+            requestUrl.searchParams.set('path', filePath);
+            if (initialAudioUrl) {
+                requestUrl.searchParams.set('audio_url', initialAudioUrl);
+            }
+
+            fetch(requestUrl.toString(), {
+                headers: {
+                    'Accept': 'application/json',
+                },
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+
+                    return response.json();
+                })
+                .then((data) => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    modalResumen.textContent = data.summary || 'Sin resumen disponible.';
+                    fillKeyPoints(Array.isArray(data.key_points) ? data.key_points : []);
+                    fillSegments(Array.isArray(data.segments) ? data.segments : []);
+
+                    const audioUrl = data.audio_url || initialAudioUrl;
+                    loadAudio(audioUrl);
+                })
+                .catch((error) => {
+                    modalResumen.textContent = `Error al cargar los datos: ${error.message}`;
+                    modalPuntosClave.innerHTML = '<li>No se pudieron cargar los puntos clave.</li>';
+                    modalSegmentos.innerHTML = '<p class="text-sm text-gray-500">No se pudo cargar la transcripción.</p>';
+                    modalAudioStatus.textContent = 'No fue posible cargar el audio.';
+                    console.error('Error:', error);
+                });
+        });
+    });
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', closeModal);
+    }
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal || event.target.classList.contains('ju-modal-backdrop')) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeModal();
+        }
+    });
 });
 </script>
 @endsection

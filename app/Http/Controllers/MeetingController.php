@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\MeetingTranscription;
+use App\Services\JuDecryptionService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class MeetingController extends Controller
 {
@@ -52,5 +55,81 @@ class MeetingController extends Controller
             'meeting' => $meetingData,
             'tasks' => $tasks,
         ]);
+    }
+
+    public function showDetails(Request $request): JsonResponse
+    {
+        $filePath = (string) $request->input('path');
+        $audioUrl = (string) $request->input('audio_url', '');
+
+        if ($filePath === '') {
+            return response()->json(['error' => 'Ruta del archivo no proporcionada.'], 422);
+        }
+
+        $resolvedPath = $this->resolveFilePath($filePath);
+
+        if (!$resolvedPath) {
+            return response()->json(['error' => 'Archivo no encontrado.'], 404);
+        }
+
+        $decryptedData = JuDecryptionService::decrypt($resolvedPath);
+
+        if (!$decryptedData) {
+            return response()->json(['error' => 'No se pudo desencriptar la información de la reunión.'], 500);
+        }
+
+        $summary = data_get($decryptedData, 'summary')
+            ?? data_get($decryptedData, 'resumen')
+            ?? 'No disponible';
+
+        $keyPoints = data_get($decryptedData, 'key_points', []);
+        $keyPoints = is_array($keyPoints) ? array_values($keyPoints) : [];
+
+        $segments = data_get($decryptedData, 'segments')
+            ?? data_get($decryptedData, 'transcription')
+            ?? [];
+        $segments = is_array($segments) ? array_values($segments) : [];
+
+        return response()->json([
+            'summary' => $summary,
+            'key_points' => $keyPoints,
+            'segments' => $segments,
+            'audio_url' => $audioUrl,
+        ]);
+    }
+
+    private function resolveFilePath(string $path): ?string
+    {
+        $candidatePaths = [$path];
+
+        $isAbsolute = str_starts_with($path, DIRECTORY_SEPARATOR)
+            || preg_match('/^[A-Za-z]:\\\\/', $path) === 1;
+
+        if (!$isAbsolute) {
+            $candidatePaths[] = storage_path($path);
+            $candidatePaths[] = storage_path('app/' . ltrim($path, '/\\'));
+            $candidatePaths[] = base_path($path);
+            $candidatePaths[] = public_path($path);
+        }
+
+        foreach ($candidatePaths as $candidate) {
+            if (!$candidate) {
+                continue;
+            }
+
+            $realPath = realpath($candidate);
+            if ($realPath === false || !is_file($realPath)) {
+                continue;
+            }
+
+            if (
+                Str::startsWith($realPath, base_path()) ||
+                Str::startsWith($realPath, storage_path())
+            ) {
+                return $realPath;
+            }
+        }
+
+        return null;
     }
 }
