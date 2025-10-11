@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GoogleToken;
 use App\Models\MeetingTranscription;
 use App\Services\JuDecryptionService;
+use App\Services\JuFileDecryption;
 use App\Services\UserGoogleDriveService;
 
 class MeetingDetailsController extends Controller
@@ -14,7 +15,11 @@ class MeetingDetailsController extends Controller
         try {
             $transcription = MeetingTranscription::findOrFail($transcriptionId);
 
-            $juData = null;
+            $meetingInfo = [
+                'summary' => 'Resumen no disponible.',
+                'key_points' => [],
+                'segments' => [],
+            ];
             if ($transcription->transcript_drive_id) {
                 $token = $this->resolveToken($transcription);
                 if ($token) {
@@ -22,7 +27,11 @@ class MeetingDetailsController extends Controller
                     $juFileContent = $this->downloadFileContent($driveService, $transcription->transcript_drive_id);
 
                     if ($juFileContent) {
-                        $juData = JuDecryptionService::decryptContent($juFileContent);
+                        $decryptedData = JuDecryptionService::decryptContent($juFileContent);
+
+                        if ($decryptedData) {
+                            $meetingInfo = JuFileDecryption::extractMeetingInfo($decryptedData);
+                        }
                     }
                 }
             }
@@ -34,9 +43,9 @@ class MeetingDetailsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'summary' => $juData['summary'] ?? 'Resumen no disponible.',
-                'key_points' => $juData['key_points'] ?? [],
-                'segments' => $juData['segments'] ?? [],
+                'summary' => $meetingInfo['summary'] ?? 'Resumen no disponible.',
+                'key_points' => $meetingInfo['key_points'] ?? [],
+                'segments' => $meetingInfo['segments'] ?? [],
                 'audio_url' => $audioUrl,
             ]);
         } catch (\Exception $e) {
