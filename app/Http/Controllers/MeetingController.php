@@ -7,6 +7,7 @@ use App\Services\JuDecryptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class MeetingController extends Controller
@@ -78,12 +79,33 @@ class MeetingController extends Controller
             return response()->json(['error' => 'No se pudo desencriptar la información de la reunión.'], 500);
         }
 
+        // Debug: log de la estructura del archivo
+        Log::info('Estructura del archivo .ju desencriptado:', [
+            'available_keys' => array_keys($decryptedData),
+            'data_sample' => array_slice($decryptedData, 0, 3, true) // Muestra solo las primeras 3 claves para debug
+        ]);
+
         $summary = data_get($decryptedData, 'summary')
             ?? data_get($decryptedData, 'resumen')
             ?? 'No disponible';
 
         $keyPoints = data_get($decryptedData, 'key_points', []);
+
+        // Debug: buscar claves similares si no existe key_points
+        if (empty($keyPoints)) {
+            $possibleKeys = [];
+            foreach (array_keys($decryptedData) as $key) {
+                if (stripos($key, 'key') !== false || stripos($key, 'point') !== false ||
+                    stripos($key, 'clave') !== false || stripos($key, 'importante') !== false) {
+                    $possibleKeys[$key] = $decryptedData[$key];
+                }
+            }
+            Log::info('Claves similares a key_points encontradas:', $possibleKeys);
+        }
+
         $keyPoints = is_array($keyPoints) ? array_values($keyPoints) : [];
+
+        Log::info('Key points procesados:', ['count' => count($keyPoints), 'data' => $keyPoints]);
 
         $segments = data_get($decryptedData, 'segments')
             ?? data_get($decryptedData, 'transcription')
@@ -95,6 +117,15 @@ class MeetingController extends Controller
             'key_points' => $keyPoints,
             'segments' => $segments,
             'audio_url' => $audioUrl,
+            // Debug: incluir información de estructura
+            'debug_info' => [
+                'available_keys' => array_keys($decryptedData),
+                'raw_key_points' => data_get($decryptedData, 'key_points', 'NOT_FOUND'),
+                'possible_key_alternatives' => array_filter(array_keys($decryptedData), function($key) {
+                    return stripos($key, 'key') !== false || stripos($key, 'point') !== false ||
+                           stripos($key, 'clave') !== false || stripos($key, 'importante') !== false;
+                })
+            ]
         ]);
     }
 

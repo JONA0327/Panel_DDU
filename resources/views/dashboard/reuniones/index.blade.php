@@ -701,8 +701,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 return response.json();
             })
             .then((data) => {
-                if (!data.success) {
-                    throw new Error(data.message || 'No se pudo obtener la información de la reunión.');
+                // Debug: mostrar información de estructura en consola
+                if (data.debug_info) {
+                    console.log('=== DEBUG INFO DEL ARCHIVO .JU ===');
+                    console.log('Claves disponibles:', data.debug_info.available_keys);
+                    console.log('Raw key_points:', data.debug_info.raw_key_points);
+                    console.log('Alternativas posibles:', data.debug_info.possible_key_alternatives);
+                    console.log('===================================');
+                }
+
+                if (data.error) {
+                    throw new Error(data.error || 'No se pudo obtener la información de la reunión.');
                 }
 
                 populateModal(data);
