@@ -4,45 +4,93 @@
 @section('page-description', 'Gestionar reuniones y participantes')
 
 @section('content')
+@php
+    // Definir variables para contenedores únicos al inicio
+    $containersCount = $meetings->flatMap->containers->unique('id')->count();
+    $uniqueContainers = $meetings->flatMap->containers->unique('id');
+@endphp
 <div class="space-y-6 fade-in">
-    <!-- Header con botón de crear -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-900">Reuniones</h2>
-            <p class="text-gray-600 mt-1">Organiza y gestiona las reuniones del equipo DDU</p>
+    <!-- Header mejorado -->
+    <div class="relative overflow-hidden bg-gradient-to-r from-ddu-lavanda via-purple-500 to-ddu-aqua rounded-2xl shadow-xl">
+        <div class="absolute inset-0 bg-black opacity-20"></div>
+        <div class="relative z-10 p-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+                <div>
+                    <h1 class="text-3xl font-bold text-white mb-2">Reuniones DDU</h1>
+                    <p class="text-white/90 text-lg">Organiza y gestiona las reuniones del equipo</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
         </div>
-
-
+        <!-- Decorative elements -->
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+        <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
     </div>
 
-    <!-- Filtros y búsqueda -->
-    <div class="ddu-card">
+    <!-- Filtros y búsqueda mejorados -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-ddu-lavanda" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                </svg>
+                Filtros de búsqueda
+            </h3>
+        </div>
         <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Buscar reunión</label>
-                    <input type="text"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ddu-lavanda focus:border-ddu-lavanda"
-                           placeholder="Título, descripción..."
-                           id="searchInput">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="space-y-2">
+                    <label class="flex items-center text-sm font-semibold text-gray-700">
+                        <svg class="w-4 h-4 mr-2 text-ddu-lavanda" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        Buscar reunión
+                    </label>
+                    <div class="relative">
+                        <input type="text"
+                               class="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-ddu-lavanda/20 focus:border-ddu-lavanda transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="Título, descripción..."
+                               id="searchInput">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-                    <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ddu-lavanda focus:border-ddu-lavanda"
-                            id="statusFilter">
-                        <option value="">Todos los estados</option>
-                        <option value="programada">Programada</option>
-                        <option value="en_curso">En Curso</option>
-                        <option value="finalizada">Finalizada</option>
-                        <option value="cancelada">Cancelada</option>
+                <div class="space-y-2">
+                    <label class="flex items-center text-sm font-semibold text-gray-700">
+                        <svg class="w-4 h-4 mr-2 text-ddu-aqua" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5v6m8-6v6m-8 4h8"></path>
+                        </svg>
+                        Contenedor
+                    </label>
+                    <select class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-ddu-aqua/20 focus:border-ddu-aqua transition-all duration-200 bg-gray-50 focus:bg-white cursor-pointer"
+                            id="containerFilter">
+                        <option value="">Todos los contenedores</option>
+                        @foreach ($uniqueContainers as $container)
+                            <option value="{{ $container->id }}">{{ $container->name }}</option>
+                        @endforeach
                     </select>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                <div class="space-y-2">
+                    <label class="flex items-center text-sm font-semibold text-gray-700">
+                        <svg class="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Fecha
+                    </label>
                     <input type="date"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ddu-lavanda focus:border-ddu-lavanda"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-200 bg-gray-50 focus:bg-white cursor-pointer"
                            id="dateFilter">
                 </div>
             </div>
@@ -95,179 +143,437 @@
         </div>
     @endif
 
-    <!-- Estadísticas rápidas -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="stat-number text-gray-900">{{ $stats['total'] }}</div>
-                    <div class="stat-label text-gray-600">Total Reuniones</div>
+    <!-- Estadísticas mejoradas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Total Reuniones -->
+        <div class="group relative overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-white"></div>
+            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-ddu-lavanda/10 to-transparent rounded-full -mr-16 -mt-16"></div>
+            <div class="relative z-10 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-4xl font-bold text-gray-800 mb-2">{{ $stats['total'] }}</div>
+                        <div class="text-lg font-semibold text-gray-600">Total Reuniones</div>
+                        <div class="text-sm text-gray-500 mt-1">Sincronizadas</div>
+                    </div>
+                    <div class="w-16 h-16 bg-gradient-to-br from-ddu-lavanda to-purple-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
                 </div>
-                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
             </div>
         </div>
 
-        <div class="stat-card primary">
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="stat-number">{{ $stats['programadas'] }}</div>
-                    <div class="stat-label">Programadas</div>
+        <!-- Total Contenedores -->
+        <div class="group relative overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-white"></div>
+            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-ddu-aqua/20 to-transparent rounded-full -mr-16 -mt-16"></div>
+            <div class="relative z-10 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-4xl font-bold text-gray-800 mb-2">{{ $containersCount }}</div>
+                        <div class="text-lg font-semibold text-gray-600">Contenedores</div>
+                        <div class="text-sm text-gray-500 mt-1">Disponibles</div>
+                    </div>
+                    <div class="w-16 h-16 bg-gradient-to-br from-ddu-aqua to-blue-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5v6m8-6v6m-8 4h8"></path>
+                        </svg>
+                    </div>
                 </div>
-                <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="stat-number text-green-600">{{ $stats['finalizadas'] }}</div>
-                    <div class="stat-label text-gray-600">Finalizadas</div>
-                </div>
-                <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="stat-number text-amber-600">{{ $stats['esta_semana'] }}</div>
-                    <div class="stat-label text-gray-600">Esta Semana</div>
-                </div>
-                <svg class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
             </div>
         </div>
     </div>
 
-    <!-- Lista de reuniones -->
-        <div class="ddu-card">
+    <!-- Lista de reuniones agrupadas por contenedor -->
+    @php
+        // Agrupar reuniones por contenedores
+        $meetingsByContainer = collect();
+        $meetingsWithoutContainer = collect();
+
+        foreach ($meetings as $meeting) {
+            if ($meeting->containers->isNotEmpty()) {
+                foreach ($meeting->containers as $container) {
+                    if (!$meetingsByContainer->has($container->id)) {
+                        $meetingsByContainer->put($container->id, [
+                            'container' => $container,
+                            'meetings' => collect()
+                        ]);
+                    }
+                    $meetingsByContainer->get($container->id)['meetings']->push($meeting);
+                }
+            } else {
+                $meetingsWithoutContainer->push($meeting);
+            }
+        }
+    @endphp
+
+    @if($meetingsByContainer->isNotEmpty())
+        @foreach($meetingsByContainer as $containerId => $group)
+            <div class="container-group bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden" data-container-id="{{ $containerId }}">
+                <!-- Header del contenedor mejorado -->
+                <div class="relative bg-gradient-to-r from-ddu-lavanda via-purple-500 to-ddu-aqua p-6">
+                    <div class="absolute inset-0 bg-black/10"></div>
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
+                    <div class="relative z-10 flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5v6m8-6v6m-8 4h8"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">{{ $group['container']->name }}</h3>
+                                <p class="text-white/90">{{ $group['meetings']->count() }} reuniones disponibles</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl text-white text-sm font-medium">
+                                📁 Contenedor
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 meetings-grid">
+                    @foreach($group['meetings'] as $meeting)
+                        @php
+                            $juFilePath = data_get($meeting->metadata, 'ju_local_path')
+                                ?? data_get($meeting->metadata, 'ju_file_path')
+                                ?? data_get($meeting->metadata, 'ju_path');
+                            $hasTranscript = (bool) ($juFilePath ?: $meeting->transcript_drive_id);
+                        @endphp
+                        <div class="group relative bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all duration-300 cursor-pointer meeting-card transform hover:-translate-y-2 overflow-hidden"
+                             @if($hasTranscript) data-transcription-id="{{ $meeting->id }}" @endif
+                             data-meeting-container="{{ $containerId }}"
+                             data-meeting-title="{{ strtolower($meeting->meeting_name) }}"
+                             data-meeting-description="{{ strtolower($meeting->meeting_description ?? '') }}">
+
+                            <!-- Header de la tarjeta -->
+                            <div class="relative bg-gradient-to-br from-gray-50 to-white p-4 border-b border-gray-100">
+                                <div class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-ddu-lavanda/10 to-transparent rounded-full -mr-8 -mt-8"></div>
+                                <div class="relative flex items-center space-x-3">
+                                    <div class="w-14 h-14 bg-gradient-to-br from-ddu-lavanda to-purple-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="text-lg font-bold text-gray-900 truncate mb-1">{{ $meeting->meeting_name }}</h4>
+                                        <div class="flex items-center text-sm text-gray-500">
+                                            <svg class="w-4 h-4 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                            Sincronizada
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contenido de la tarjeta -->
+                            <div class="p-6">
+                                @if ($meeting->meeting_description)
+                                    <div class="mb-4 p-3 bg-gray-50 rounded-xl border-l-4 border-ddu-aqua">
+                                        <p class="text-gray-700 text-sm leading-relaxed">{{ Str::limit($meeting->meeting_description, 120) }}</p>
+                                    </div>
+                                @endif
+
+                                <!-- Información de fechas y duración mejorada -->
+                                <div class="space-y-3">
+                                    @if ($meeting->started_at)
+                                        <div class="flex items-center p-2 bg-ddu-lavanda/5 rounded-lg">
+                                            <div class="w-8 h-8 bg-ddu-lavanda/20 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-4 h-4 text-ddu-lavanda" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm font-semibold text-gray-800">{{ $meeting->started_at->format('d/m/Y') }}</div>
+                                                <div class="text-xs text-gray-500">{{ $meeting->started_at->format('H:i') }}</div>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    @if ($meeting->duration_minutes)
+                                        <div class="flex items-center p-2 bg-green-50 rounded-lg">
+                                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm font-semibold text-gray-800">{{ $meeting->duration_minutes }} minutos</div>
+                                                <div class="text-xs text-gray-500">Duración total</div>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    @if ($meeting->ended_at)
+                                        <div class="flex items-center p-2 bg-gray-50 rounded-lg">
+                                            <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm font-semibold text-gray-800">{{ $meeting->ended_at->format('H:i') }}</div>
+                                                <div class="text-xs text-gray-500">Finalizada</div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Pie de tarjeta con diseño mejorado -->
+                            <div class="bg-gradient-to-br from-gray-50 via-white to-gray-50 px-6 py-4 rounded-b-2xl border-t border-gray-100">
+                                <div class="flex items-center justify-between">
+                                    <!-- Estado e información -->
+                                    <div class="flex items-center space-x-3">
+                                        <div class="flex items-center bg-gradient-to-r from-green-100 to-green-50 px-3 py-1.5 rounded-xl border border-green-200">
+                                            <div class="w-2 h-2 bg-gradient-to-r from-green-400 to-green-500 rounded-full mr-2 animate-pulse"></div>
+                                            <span class="text-xs font-semibold text-green-700">Procesada</span>
+                                        </div>
+
+                                        @if (! $hasTranscript)
+                                            <span class="text-xs text-gray-400 italic bg-gray-50 px-2 py-1 rounded-lg">Sin transcripción</span>
+                                        @else
+                                            <div class="flex items-center text-ddu-lavanda">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                                <span class="text-xs font-medium">Ver detalles</span>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <!-- Botones de descarga ocultos pero funcionales -->
+                                    <div class="hidden">
+                                        @if ($meeting->audio_drive_id)
+                                            <a href="{{ route('download.audio', $meeting) }}"
+                                               onclick="event.stopPropagation();"
+                                               title="Descargar audio">Descargar audio</a>
+                                        @endif
+
+                                        @if ($meeting->transcript_drive_id)
+                                            <a href="{{ route('download.ju', $meeting) }}"
+                                               onclick="event.stopPropagation();"
+                                               title="Descargar archivo .ju">Descargar .ju</a>
+                                        @endif
+                                    </div>
+
+                                    <!-- ID de reunión con diseño mejorado -->
+                                    @if ($meeting->meeting_id)
+                                        <div class="bg-gradient-to-r from-ddu-aqua/10 to-ddu-lavanda/10 backdrop-blur-sm border border-gray-200 px-3 py-1.5 rounded-xl">
+                                            <span class="text-xs font-mono text-gray-600 font-medium">#{{ substr($meeting->meeting_id, 0, 8) }}</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endforeach
+    @endif
+
+    @if($meetingsWithoutContainer->isNotEmpty())
+        <div class="ddu-card container-group" data-container-id="">
             <div class="ddu-card-header">
-                <div>
-                    <h3 class="ddu-card-title">Reuniones sincronizadas</h3>
-                    <p class="ddu-card-subtitle">Información consolidada desde Google Drive y contenedores locales</p>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="ddu-card-title">Reuniones sin contenedor</h3>
+                        <p class="ddu-card-subtitle">{{ $meetingsWithoutContainer->count() }} reuniones sin contenedor asignado</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-sm font-medium">
+                            Sin contenedor
+                        </span>
+                    </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                @forelse ($meetings as $meeting)
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 meetings-grid">
+                @foreach($meetingsWithoutContainer as $meeting)
                     @php
                         $juFilePath = data_get($meeting->metadata, 'ju_local_path')
                             ?? data_get($meeting->metadata, 'ju_file_path')
                             ?? data_get($meeting->metadata, 'ju_path');
                         $hasTranscript = (bool) ($juFilePath ?: $meeting->transcript_drive_id);
                     @endphp
-                    <div class="ddu-card hover:shadow-lg transition-shadow">
-                        <div class="ddu-card-header">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-12 h-12 bg-gradient-to-r from-ddu-lavanda to-ddu-aqua rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" />
-                                    </svg>
+                    <!-- Tarjeta de reunión sin contenedor con diseño moderno -->
+                    <div class="group bg-white rounded-2xl shadow-sm hover:shadow-2xl border border-gray-200 hover:border-ddu-lavanda/30 transition-all duration-300 cursor-pointer meeting-card transform hover:-translate-y-1"
+                         @if($hasTranscript) data-transcription-id="{{ $meeting->id }}" @endif
+                         data-meeting-container=""
+                         data-meeting-title="{{ strtolower($meeting->meeting_name) }}"
+                         data-meeting-description="{{ strtolower($meeting->meeting_description ?? '') }}">
+
+                        <!-- Encabezado de tarjeta mejorado -->
+                        <div class="bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 p-5 rounded-t-2xl border-b border-gray-100">
+                            <div class="flex items-center space-x-4">
+                                <div class="relative">
+                                    <div class="w-14 h-14 bg-gradient-to-br from-gray-500 via-gray-600 to-gray-700 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform duration-200">
+                                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <div class="absolute -top-1 -right-1 w-4 h-4 bg-orange-400 rounded-full border-2 border-white flex items-center justify-center">
+                                        <svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <h4 class="ddu-card-title truncate">{{ $meeting->meeting_name }}</h4>
-                                    <p class="ddu-card-subtitle">Sincronizada automáticamente</p>
+                                    <h4 class="text-lg font-bold text-gray-900 truncate mb-1 group-hover:text-ddu-lavanda transition-colors duration-200">{{ $meeting->meeting_name }}</h4>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                            </svg>
+                                            Sin contenedor
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="p-4">
+                        <!-- Contenido de la tarjeta -->
+                        <div class="p-6">
                             @if ($meeting->meeting_description)
-                                <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ Str::limit($meeting->meeting_description, 100) }}</p>
+                                <div class="mb-4 p-3 bg-gray-50 rounded-xl border-l-4 border-gray-400">
+                                    <p class="text-gray-700 text-sm leading-relaxed">{{ Str::limit($meeting->meeting_description, 120) }}</p>
+                                </div>
                             @endif
 
-                            <div class="space-y-2 text-sm text-gray-500">
+                            <!-- Información de fechas y duración mejorada -->
+                            <div class="space-y-3">
                                 @if ($meeting->started_at)
-                                    <div class="flex items-center">
-                                        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        <span>{{ $meeting->started_at->format('d/m/Y H:i') }}</span>
+                                    <div class="flex items-center p-2 bg-gray-100/70 rounded-lg">
+                                        <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-semibold text-gray-800">{{ $meeting->started_at->format('d/m/Y') }}</div>
+                                            <div class="text-xs text-gray-500">{{ $meeting->started_at->format('H:i') }}</div>
+                                        </div>
                                     </div>
                                 @endif
+
                                 @if ($meeting->duration_minutes)
-                                    <div class="flex items-center">
-                                        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span>{{ $meeting->duration_minutes }} minutos</span>
+                                    <div class="flex items-center p-2 bg-green-50 rounded-lg">
+                                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-semibold text-gray-800">{{ $meeting->duration_minutes }} minutos</div>
+                                            <div class="text-xs text-gray-500">Duración total</div>
+                                        </div>
                                     </div>
                                 @endif
-                                @if ($meeting->containers->isNotEmpty())
-                                    <div class="flex items-center">
-                                        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h7" />
-                                        </svg>
-                                        <span class="truncate">{{ $meeting->containers->pluck('name')->implode(', ') }}</span>
+
+                                @if ($meeting->ended_at)
+                                    <div class="flex items-center p-2 bg-gray-50 rounded-lg">
+                                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-semibold text-gray-800">{{ $meeting->ended_at->format('H:i') }}</div>
+                                            <div class="text-xs text-gray-500">Finalizada</div>
+                                        </div>
                                     </div>
                                 @endif
                             </div>
+                        </div>
 
-                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-                                <span class="px-2 py-1 text-xs font-medium rounded-full {{ $meeting->status_badge_color }}">
-                                    {{ $meeting->status_label }}
-                                </span>
+                        <!-- Pie de tarjeta con diseño mejorado -->
+                        <div class="bg-gradient-to-br from-gray-50 via-white to-gray-50 px-6 py-4 rounded-b-2xl border-t border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <!-- Estado e información -->
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex items-center bg-gradient-to-r from-gray-100 to-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
+                                        <div class="w-2 h-2 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full mr-2"></div>
+                                        <span class="text-xs font-semibold text-gray-700">Sin asignar</span>
+                                    </div>
 
-                                <div class="flex space-x-1">
+                                    @if (! $hasTranscript)
+                                        <span class="text-xs text-gray-400 italic bg-gray-50 px-2 py-1 rounded-lg">Sin transcripción</span>
+                                    @else
+                                        <div class="flex items-center text-ddu-lavanda">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                            </svg>
+                                            <span class="text-xs font-medium">Ver detalles</span>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <!-- Botones de descarga ocultos pero funcionales -->
+                                <div class="hidden">
                                     @if ($meeting->audio_drive_id)
                                         <a href="{{ route('download.audio', $meeting) }}"
-                                           class="btn btn-outline btn-xs"
                                            onclick="event.stopPropagation();"
-                                           title="Descargar audio">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M6.343 6.343a8 8 0 000 11.314m15.314-11.314a8 8 0 000 11.314" />
-                                            </svg>
-                                        </a>
+                                           title="Descargar audio">Descargar audio</a>
                                     @endif
 
                                     @if ($meeting->transcript_drive_id)
                                         <a href="{{ route('download.ju', $meeting) }}"
-                                           class="btn btn-outline btn-xs"
                                            onclick="event.stopPropagation();"
-                                           title="Descargar archivo .ju">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                                            </svg>
-                                        </a>
-                                    @endif
-
-                                    @if ($hasTranscript)
-                                        <button type="button"
-                                                class="btn btn-primary btn-xs btn-view-details"
-                                                data-transcription-id="{{ $meeting->id }}"
-                                                title="Ver detalles de la reunión">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                </svg>
-                                        </button>
+                                           title="Descargar archivo .ju">Descargar .ju</a>
                                     @endif
                                 </div>
 
-                                @if (! $hasTranscript)
-                                    <span class="text-xs text-gray-400 italic">Transcripción no disponible</span>
+                                <!-- ID de reunión con diseño mejorado -->
+                                @if ($meeting->meeting_id)
+                                    <div class="bg-gradient-to-r from-gray-100/70 to-gray-200/70 backdrop-blur-sm border border-gray-200 px-3 py-1.5 rounded-xl">
+                                        <span class="text-xs font-mono text-gray-600 font-medium">#{{ substr($meeting->meeting_id, 0, 8) }}</span>
+                                    </div>
                                 @endif
                             </div>
                         </div>
                     </div>
-                @empty
-                    <div class="p-12 text-center">
-                        <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">No hay reuniones sincronizadas</h3>
-                        <p class="text-gray-500 mb-6">Las reuniones aparecerán automáticamente cuando el proceso de Juntify termine la sincronización.</p>
-                    </div>
-                @endforelse
+                @endforeach
             </div>
         </div>
+    @endif
+
+    @if($meetings->isEmpty())
+        <div class="max-w-md mx-auto">
+            <div class="bg-white rounded-3xl shadow-lg border border-gray-200 overflow-hidden">
+                <!-- Encabezado con gradiente -->
+                <div class="bg-gradient-to-r from-ddu-lavanda/20 via-purple-100 to-ddu-aqua/20 p-8 text-center">
+                    <div class="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-ddu-lavanda to-ddu-aqua rounded-full flex items-center justify-center shadow-lg">
+                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Contenido -->
+                <div class="p-8 text-center">
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">No hay reuniones disponibles</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Las reuniones aparecerán automáticamente cuando el proceso de Juntify termine la sincronización.
+                    </p>
+
+                    <!-- Indicador de estado -->
+                    <div class="inline-flex items-center px-4 py-2 bg-blue-50 rounded-full border border-blue-200">
+                        <div class="w-2 h-2 bg-blue-400 rounded-full mr-2 animate-pulse"></div>
+                        <span class="text-sm font-medium text-blue-700">Sistema en sincronización</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
     <!-- Modal de detalles de la reunión -->
     <div id="meeting-modal" class="ju-modal modal-oculto">
         <div class="ju-modal-backdrop"></div>
@@ -498,6 +804,69 @@ body.modal-open {
     margin: 1.5rem 0;
 }
 
+/* Estilos para tarjetas clickeables */
+.meeting-card {
+    transition: all 0.3s ease;
+}
+
+.meeting-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.meeting-card[data-transcription-id]:hover {
+    border-color: #6F78E4;
+}
+
+.meeting-card[data-transcription-id] {
+    position: relative;
+}
+
+/* Estilos para grupos de contenedores */
+.container-group {
+    margin-bottom: 2rem;
+}
+
+.container-group .ddu-card-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.container-group[data-container-id=""] .ddu-card-header {
+    background: linear-gradient(135deg, #fafafa 0%, #f4f4f5 100%);
+}
+
+.meetings-grid {
+    transition: all 0.3s ease;
+}
+
+/* Animaciones para filtrado */
+.meeting-card {
+    transition: all 0.3s ease;
+}
+
+.meeting-card[style*="display: none"] {
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+/* Ocultar botones de descarga, texto de detalles y badge de estado */
+.meeting-card .btn-outline {
+    display: none !important;
+}
+
+.meeting-card .text-ddu-lavanda {
+    display: none !important;
+}
+
+.meeting-card .text-gray-400.italic {
+    display: none !important;
+}
+
+.meeting-card span[class*="rounded-full"] {
+    display: none !important;
+}
+
 </style>
 
 <script>
@@ -546,25 +915,99 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            console.log('Buscar:', this.value);
+    // Función para filtrar reuniones
+    function filterMeetings() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const selectedContainer = document.getElementById('containerFilter').value;
+        const selectedDate = document.getElementById('dateFilter').value;
+
+        const containerGroups = document.querySelectorAll('.container-group');
+
+        containerGroups.forEach(group => {
+            const containerMeetings = group.querySelectorAll('.meeting-card');
+            let visibleMeetingsCount = 0;
+
+            // Filtrar por contenedor
+            const groupContainerId = group.dataset.containerId;
+            if (selectedContainer && selectedContainer !== groupContainerId) {
+                group.style.display = 'none';
+                return;
+            }
+
+            // Filtrar reuniones individuales
+            containerMeetings.forEach(meetingCard => {
+                let shouldShow = true;
+
+                // Filtro de búsqueda por texto
+                if (searchTerm) {
+                    const title = meetingCard.dataset.meetingTitle || '';
+                    const description = meetingCard.dataset.meetingDescription || '';
+                    if (!title.includes(searchTerm) && !description.includes(searchTerm)) {
+                        shouldShow = false;
+                    }
+                }
+
+                // Filtro por estado (se puede implementar agregando data-status a las tarjetas)
+                // if (selectedStatus) {
+                //     // TODO: Implementar filtro por estado
+                // }
+
+                // Filtro por fecha (se puede implementar agregando data-date a las tarjetas)
+                // if (selectedDate) {
+                //     // TODO: Implementar filtro por fecha
+                // }
+
+                if (shouldShow) {
+                    meetingCard.style.display = 'block';
+                    visibleMeetingsCount++;
+                } else {
+                    meetingCard.style.display = 'none';
+                }
+            });
+
+            // Mostrar/ocultar grupo completo basado en reuniones visibles
+            if (visibleMeetingsCount > 0) {
+                group.style.display = 'block';
+                // Actualizar contador en el subtítulo
+                const subtitle = group.querySelector('.ddu-card-subtitle');
+                if (subtitle) {
+                    const originalText = subtitle.textContent;
+                    if (visibleMeetingsCount === containerMeetings.length) {
+                        // Mostrar texto original
+                        if (groupContainerId === '') {
+                            subtitle.textContent = `${containerMeetings.length} reuniones sin contenedor asignado`;
+                        } else {
+                            subtitle.textContent = `${containerMeetings.length} reuniones en este contenedor`;
+                        }
+                    } else {
+                        // Mostrar reuniones filtradas
+                        if (groupContainerId === '') {
+                            subtitle.textContent = `${visibleMeetingsCount} de ${containerMeetings.length} reuniones sin contenedor`;
+                        } else {
+                            subtitle.textContent = `${visibleMeetingsCount} de ${containerMeetings.length} reuniones en este contenedor`;
+                        }
+                    }
+                }
+            } else {
+                group.style.display = 'none';
+            }
         });
     }
 
-    const statusFilter = document.getElementById('statusFilter');
-    if (statusFilter) {
-        statusFilter.addEventListener('change', function () {
-            console.log('Filtrar por estado:', this.value);
-        });
+    // Event listeners para filtros
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', filterMeetings);
+    }
+
+    const containerFilter = document.getElementById('containerFilter');
+    if (containerFilter) {
+        containerFilter.addEventListener('change', filterMeetings);
     }
 
     const dateFilter = document.getElementById('dateFilter');
     if (dateFilter) {
-        dateFilter.addEventListener('change', function () {
-            console.log('Filtrar por fecha:', this.value);
-        });
+        dateFilter.addEventListener('change', filterMeetings);
     }
 
     const modal = document.getElementById('meeting-modal');
@@ -765,9 +1208,14 @@ document.addEventListener('DOMContentLoaded', () => {
         resetModalContent();
     };
 
-    document.querySelectorAll('.btn-view-details').forEach((button) => {
-        button.addEventListener('click', () => {
-            const transcriptionId = button.dataset.transcriptionId;
+    document.querySelectorAll('.meeting-card').forEach((card) => {
+        card.addEventListener('click', (event) => {
+            // Verificar si el click fue en un botón de descarga
+            if (event.target.closest('a') || event.target.closest('button')) {
+                return; // No abrir el modal si se hizo click en un botón
+            }
+
+            const transcriptionId = card.dataset.transcriptionId;
             if (transcriptionId) {
                 openMeetingModal(transcriptionId);
             }
@@ -793,5 +1241,118 @@ document.addEventListener('DOMContentLoaded', () => {
     resetModalContent();
 });
 </script>
+
+<style>
+/* Estilos adicionales para mejorar la experiencia visual */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+.meeting-card {
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.meeting-card:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.meeting-card:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.meeting-card:nth-child(4) {
+    animation-delay: 0.3s;
+}
+
+.container-group {
+    animation: slideInRight 0.8s ease-out;
+}
+
+/* Mejora de los efectos hover */
+.meeting-card:hover .w-14,
+.meeting-card:hover .w-12 {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.statistics-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Efecto de loading suave */
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: .5;
+    }
+}
+
+/* Mejoras en inputs */
+input:focus {
+    box-shadow: 0 0 0 4px rgba(var(--ddu-lavanda-rgb), 0.1);
+    border-color: var(--ddu-lavanda);
+}
+
+/* Transiciones suaves globales */
+* {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mejora del scroll */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, var(--ddu-lavanda), var(--ddu-aqua));
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, rgba(var(--ddu-lavanda-rgb), 0.8), rgba(var(--ddu-aqua-rgb), 0.8));
+}
+</style>
 
 @endsection
