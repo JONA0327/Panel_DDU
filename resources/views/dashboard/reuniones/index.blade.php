@@ -19,13 +19,6 @@
                     <h1 class="text-3xl font-bold text-white mb-2">Reuniones DDU</h1>
                     <p class="text-white/90 text-lg">Organiza y gestiona las reuniones del equipo</p>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
-                </div>
             </div>
         </div>
         <!-- Decorative elements -->
@@ -35,8 +28,8 @@
 
     <!-- Filtros y búsqueda mejorados -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+        <div class="bg-gradient-to-r from-ddu-aqua/20 via-ddu-lavanda/10 to-ddu-aqua/15 px-6 py-4 border-b border-ddu-aqua/20">
+            <h3 class="text-lg font-semibold text-ddu-lavanda flex items-center">
                 <svg class="w-5 h-5 mr-2 text-ddu-lavanda" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                 </svg>
@@ -54,11 +47,11 @@
                     </label>
                     <div class="relative">
                         <input type="text"
-                               class="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-ddu-lavanda/20 focus:border-ddu-lavanda transition-all duration-200 bg-gray-50 focus:bg-white"
+                               class="w-full pl-11 pr-4 py-3 border-2 border-ddu-lavanda/20 rounded-xl focus:ring-3 focus:ring-ddu-lavanda/30 focus:border-ddu-lavanda transition-all duration-200 bg-ddu-lavanda/5 focus:bg-white"
                                placeholder="Título, descripción..."
                                id="searchInput">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-ddu-lavanda/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                         </div>
@@ -73,7 +66,7 @@
                         </svg>
                         Contenedor
                     </label>
-                    <select class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-ddu-aqua/20 focus:border-ddu-aqua transition-all duration-200 bg-gray-50 focus:bg-white cursor-pointer"
+                    <select class="w-full px-4 py-3 border-2 border-ddu-aqua/20 rounded-xl focus:ring-3 focus:ring-ddu-aqua/30 focus:border-ddu-aqua transition-all duration-200 bg-ddu-aqua/5 focus:bg-white cursor-pointer"
                             id="containerFilter">
                         <option value="">Todos los contenedores</option>
                         @foreach ($uniqueContainers as $container)
@@ -90,7 +83,7 @@
                         Fecha
                     </label>
                     <input type="date"
-                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-200 bg-gray-50 focus:bg-white cursor-pointer"
+                           class="w-full px-4 py-3 border-2 border-ddu-lavanda/20 rounded-xl focus:ring-3 focus:ring-ddu-lavanda/30 focus:border-ddu-lavanda transition-all duration-200 bg-ddu-lavanda/5 focus:bg-white cursor-pointer"
                            id="dateFilter">
                 </div>
             </div>
@@ -146,9 +139,9 @@
     <!-- Estadísticas mejoradas -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Total Reuniones -->
-        <div class="group relative overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-white"></div>
-            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-ddu-lavanda/10 to-transparent rounded-full -mr-16 -mt-16"></div>
+        <div class="group relative overflow-hidden bg-white rounded-2xl shadow-lg border border-ddu-lavanda/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-ddu-lavanda/40">
+            <div class="absolute inset-0 bg-gradient-to-br from-ddu-lavanda/5 via-white to-ddu-lavanda/10"></div>
+            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-ddu-lavanda/20 to-transparent rounded-full -mr-16 -mt-16"></div>
             <div class="relative z-10 p-6">
                 <div class="flex items-center justify-between">
                     <div>
@@ -166,8 +159,8 @@
         </div>
 
         <!-- Total Contenedores -->
-        <div class="group relative overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-white"></div>
+        <div class="group relative overflow-hidden bg-white rounded-2xl shadow-lg border border-ddu-aqua/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-ddu-aqua/40">
+            <div class="absolute inset-0 bg-gradient-to-br from-ddu-aqua/5 via-white to-ddu-aqua/10"></div>
             <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-ddu-aqua/20 to-transparent rounded-full -mr-16 -mt-16"></div>
             <div class="relative z-10 p-6">
                 <div class="flex items-center justify-between">
@@ -253,8 +246,8 @@
                              data-meeting-description="{{ strtolower($meeting->meeting_description ?? '') }}">
 
                             <!-- Header de la tarjeta -->
-                            <div class="relative bg-gradient-to-br from-gray-50 to-white p-4 border-b border-gray-100">
-                                <div class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-ddu-lavanda/10 to-transparent rounded-full -mr-8 -mt-8"></div>
+                            <div class="relative bg-gradient-to-br from-ddu-lavanda/5 via-white to-ddu-aqua/5 p-4 border-b border-ddu-lavanda/20">
+                                <div class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-ddu-lavanda/15 to-transparent rounded-full -mr-8 -mt-8"></div>
                                 <div class="relative flex items-center space-x-3">
                                     <div class="w-14 h-14 bg-gradient-to-br from-ddu-lavanda to-purple-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                                         <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -276,7 +269,7 @@
                             <!-- Contenido de la tarjeta -->
                             <div class="p-6">
                                 @if ($meeting->meeting_description)
-                                    <div class="mb-4 p-3 bg-gray-50 rounded-xl border-l-4 border-ddu-aqua">
+                                    <div class="mb-4 p-3 bg-ddu-aqua/10 rounded-xl border-l-4 border-ddu-aqua">
                                         <p class="text-gray-700 text-sm leading-relaxed">{{ Str::limit($meeting->meeting_description, 120) }}</p>
                                     </div>
                                 @endif
@@ -312,9 +305,9 @@
                                     @endif
 
                                     @if ($meeting->ended_at)
-                                        <div class="flex items-center p-2 bg-gray-50 rounded-lg">
-                                            <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-                                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div class="flex items-center p-2 bg-ddu-lavanda/10 rounded-lg">
+                                            <div class="w-8 h-8 bg-ddu-lavanda/20 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-4 h-4 text-ddu-lavanda" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                                 </svg>
                                             </div>
@@ -328,7 +321,7 @@
                             </div>
 
                             <!-- Pie de tarjeta con diseño mejorado -->
-                            <div class="bg-gradient-to-br from-gray-50 via-white to-gray-50 px-6 py-4 rounded-b-2xl border-t border-gray-100">
+                            <div class="bg-gradient-to-br from-ddu-lavanda/5 via-white to-ddu-aqua/5 px-6 py-4 rounded-b-2xl border-t border-ddu-lavanda/20">
                                 <div class="flex items-center justify-between">
                                     <!-- Estado e información -->
                                     <div class="flex items-center space-x-3">
@@ -338,7 +331,7 @@
                                         </div>
 
                                         @if (! $hasTranscript)
-                                            <span class="text-xs text-gray-400 italic bg-gray-50 px-2 py-1 rounded-lg">Sin transcripción</span>
+                                            <span class="text-xs text-gray-400 italic bg-ddu-lavanda/10 px-2 py-1 rounded-lg">Sin transcripción</span>
                                         @else
                                             <div class="flex items-center text-ddu-lavanda">
                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -389,7 +382,7 @@
                         <p class="ddu-card-subtitle">{{ $meetingsWithoutContainer->count() }} reuniones sin contenedor asignado</p>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-sm font-medium">
+                        <span class="px-3 py-1 rounded-full bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 text-sm font-medium border border-orange-200">
                             Sin contenedor
                         </span>
                     </div>
@@ -412,10 +405,10 @@
                          data-meeting-description="{{ strtolower($meeting->meeting_description ?? '') }}">
 
                         <!-- Encabezado de tarjeta mejorado -->
-                        <div class="bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 p-5 rounded-t-2xl border-b border-gray-100">
+                        <div class="bg-gradient-to-r from-ddu-lavanda/10 via-ddu-aqua/5 to-ddu-lavanda/15 p-5 rounded-t-2xl border-b border-ddu-lavanda/20">
                             <div class="flex items-center space-x-4">
                                 <div class="relative">
-                                    <div class="w-14 h-14 bg-gradient-to-br from-gray-500 via-gray-600 to-gray-700 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform duration-200">
+                                    <div class="w-14 h-14 bg-gradient-to-br from-ddu-lavanda via-ddu-aqua to-purple-500 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform duration-200">
                                         <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" />
                                         </svg>
@@ -443,7 +436,7 @@
                         <!-- Contenido de la tarjeta -->
                         <div class="p-6">
                             @if ($meeting->meeting_description)
-                                <div class="mb-4 p-3 bg-gray-50 rounded-xl border-l-4 border-gray-400">
+                                <div class="mb-4 p-3 bg-ddu-lavanda/10 rounded-xl border-l-4 border-ddu-lavanda">
                                     <p class="text-gray-700 text-sm leading-relaxed">{{ Str::limit($meeting->meeting_description, 120) }}</p>
                                 </div>
                             @endif
@@ -451,9 +444,9 @@
                             <!-- Información de fechas y duración mejorada -->
                             <div class="space-y-3">
                                 @if ($meeting->started_at)
-                                    <div class="flex items-center p-2 bg-gray-100/70 rounded-lg">
-                                        <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
-                                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex items-center p-2 bg-ddu-lavanda/10 rounded-lg">
+                                        <div class="w-8 h-8 bg-ddu-lavanda/20 rounded-lg flex items-center justify-center mr-3">
+                                            <svg class="w-4 h-4 text-ddu-lavanda" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" />
                                             </svg>
                                         </div>
@@ -479,9 +472,9 @@
                                 @endif
 
                                 @if ($meeting->ended_at)
-                                    <div class="flex items-center p-2 bg-gray-50 rounded-lg">
-                                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-                                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex items-center p-2 bg-ddu-aqua/10 rounded-lg">
+                                        <div class="w-8 h-8 bg-ddu-aqua/20 rounded-lg flex items-center justify-center mr-3">
+                                            <svg class="w-4 h-4 text-ddu-aqua" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                             </svg>
                                         </div>
@@ -495,17 +488,17 @@
                         </div>
 
                         <!-- Pie de tarjeta con diseño mejorado -->
-                        <div class="bg-gradient-to-br from-gray-50 via-white to-gray-50 px-6 py-4 rounded-b-2xl border-t border-gray-100">
+                        <div class="bg-gradient-to-br from-ddu-lavanda/5 via-white to-ddu-aqua/5 px-6 py-4 rounded-b-2xl border-t border-ddu-lavanda/20">
                             <div class="flex items-center justify-between">
                                 <!-- Estado e información -->
                                 <div class="flex items-center space-x-3">
-                                    <div class="flex items-center bg-gradient-to-r from-gray-100 to-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
-                                        <div class="w-2 h-2 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full mr-2"></div>
-                                        <span class="text-xs font-semibold text-gray-700">Sin asignar</span>
+                                    <div class="flex items-center bg-gradient-to-r from-orange-100 to-orange-50 px-3 py-1.5 rounded-xl border border-orange-200">
+                                        <div class="w-2 h-2 bg-gradient-to-r from-orange-400 to-orange-500 rounded-full mr-2"></div>
+                                        <span class="text-xs font-semibold text-orange-700">Sin asignar</span>
                                     </div>
 
                                     @if (! $hasTranscript)
-                                        <span class="text-xs text-gray-400 italic bg-gray-50 px-2 py-1 rounded-lg">Sin transcripción</span>
+                                        <span class="text-xs text-gray-400 italic bg-ddu-lavanda/10 px-2 py-1 rounded-lg">Sin transcripción</span>
                                     @else
                                         <div class="flex items-center text-ddu-lavanda">
                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -534,8 +527,8 @@
 
                                 <!-- ID de reunión con diseño mejorado -->
                                 @if ($meeting->meeting_id)
-                                    <div class="bg-gradient-to-r from-gray-100/70 to-gray-200/70 backdrop-blur-sm border border-gray-200 px-3 py-1.5 rounded-xl">
-                                        <span class="text-xs font-mono text-gray-600 font-medium">#{{ substr($meeting->meeting_id, 0, 8) }}</span>
+                                    <div class="bg-gradient-to-r from-ddu-lavanda/10 to-ddu-aqua/10 backdrop-blur-sm border border-ddu-lavanda/30 px-3 py-1.5 rounded-xl">
+                                        <span class="text-xs font-mono text-ddu-lavanda font-medium">#{{ substr($meeting->meeting_id, 0, 8) }}</span>
                                     </div>
                                 @endif
                             </div>

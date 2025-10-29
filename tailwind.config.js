@@ -14,6 +14,14 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                'ddu-aqua': '#6DDEDD',
+                'ddu-lavanda': '#546CB1',
+                'ddu-navy-dark': '#1F2A4E',
+                'ddu-navy': '#233771',
+                'ddu-blue': '#45539F',
+                'ddu-purple': '#6F78E4',
+            },
         },
     },
 

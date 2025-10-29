@@ -33,18 +33,16 @@
     </style>
 </head>
 <body class="font-lato antialiased bg-gray-50">
-    <div class="min-h-screen flex">
+    <div class="h-screen flex overflow-hidden">
         <!-- Sidebar -->
-        <nav class="w-64 shadow-lg border-r border-gray-200" style="background: linear-gradient(180deg, #1F2A4E 0%, #233771 40%, #45539F 100%);">
+        <nav class="w-64 shadow-lg border-r border-gray-200 flex-shrink-0 h-full overflow-y-auto" style="background: linear-gradient(180deg, #1F2A4E 0%, #233771 40%, #45539F 100%);">
             <!-- Logo/Brand -->
             <div class="p-6 border-b border-white/10">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #6DDEDD 0%, #6F78E4 100%);">
-                        <span class="text-white font-bold text-lg">DDU</span>
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-white text-lg">Panel DDU</h1>
-                        <p class="text-sm text-white/70">Dashboard</p>
+                <div class="flex justify-center">
+                    <div class="w-20 h-20 flex items-center justify-center">
+                        <img src="{{ asset('build/Gemini_Generated_Image_wxj41rwxj41rwxj4-removebg-preview.png') }}"
+                             alt="DDU Logo"
+                             class="w-full h-full object-contain">
                     </div>
                 </div>
             </div>
