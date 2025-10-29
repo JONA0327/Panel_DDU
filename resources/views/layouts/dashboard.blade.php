@@ -17,30 +17,34 @@
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/css/dashboard.css', 'resources/js/dashboard.js', 'resources/css/ddu-modal.css'])
 
-    <!-- Custom DDU Colors -->
+    <!-- Custom DDU Colors - Paleta Institucional -->
     <style>
         :root {
-            --ddu-lavanda: #6F78E4;
             --ddu-aqua: #6DDEDD;
-            --ddu-lavanda-light: #8B93EA;
-            --ddu-aqua-light: #8DE8E3;
-            --ddu-gradient: linear-gradient(135deg, #6F78E4 0%, #6DDEDD 100%);
+            --ddu-lavanda: #546CB1;
+            --ddu-navy-dark: #1F2A4E;
+            --ddu-navy: #233771;
+            --ddu-blue: #45539F;
+            --ddu-purple: #6F78E4;
+            --ddu-gradient: linear-gradient(135deg, #6DDEDD 0%, #546CB1 20%, #1F2A4E 40%, #233771 60%, #45539F 80%, #6F78E4 100%);
+            --ddu-gradient-soft: linear-gradient(135deg, #6DDEDD 0%, #546CB1 50%, #6F78E4 100%);
+            --ddu-gradient-sidebar: linear-gradient(180deg, #1F2A4E 0%, #233771 50%, #45539F 100%);
         }
     </style>
 </head>
 <body class="font-lato antialiased bg-gray-50">
     <div class="min-h-screen flex">
         <!-- Sidebar -->
-        <nav class="w-64 bg-white shadow-lg border-r border-gray-200">
+        <nav class="w-64 shadow-lg border-r border-gray-200" style="background: linear-gradient(180deg, #1F2A4E 0%, #233771 40%, #45539F 100%);">
             <!-- Logo/Brand -->
-            <div class="p-6 border-b border-gray-200">
+            <div class="p-6 border-b border-white/10">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--ddu-gradient);">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #6DDEDD 0%, #6F78E4 100%);">
                         <span class="text-white font-bold text-lg">DDU</span>
                     </div>
                     <div>
-                        <h1 class="font-bold text-gray-900 text-lg">Panel DDU</h1>
-                        <p class="text-sm text-gray-500">Dashboard</p>
+                        <h1 class="font-bold text-white text-lg">Panel DDU</h1>
+                        <p class="text-sm text-white/70">Dashboard</p>
                     </div>
                 </div>
             </div>
@@ -84,11 +88,11 @@
                     $correctUser = App\Models\User::find($currentMember->user_id);
                 }
             @endphp
-            <div class="p-4 border-b border-gray-200 bg-gray-50">
+            <div class="p-4 border-b border-white/10" style="background: rgba(255, 255, 255, 0.05);">
 
 
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-ddu-lavanda rounded-full flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: linear-gradient(135deg, #6DDEDD 0%, #6F78E4 100%);">
                         <span class="text-white font-semibold text-sm">
                             @if($currentMember && $correctUser)
                                 {{ substr($correctUser->full_name ?? $correctUser->username ?? 'U', 0, 1) }}
@@ -99,11 +103,11 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         @if($currentMember && $correctUser)
-                            <p class="font-medium text-gray-900 text-sm truncate">{{ $correctUser->full_name ?? $correctUser->username ?? 'Usuario DDU' }}</p>
-                            <p class="text-xs text-gray-500 truncate">{{ ucfirst($currentMember->role) }} - {{ $correctUser->username ?? $correctUser->email }}</p>
+                            <p class="font-medium text-white text-sm truncate">{{ $correctUser->full_name ?? $correctUser->username ?? 'Usuario DDU' }}</p>
+                            <p class="text-xs text-white/70 truncate">{{ ucfirst($currentMember->role) }} - {{ $correctUser->username ?? $correctUser->email }}</p>
                         @else
-                            <p class="font-medium text-gray-900 text-sm truncate">{{ Auth::user()->full_name ?? Auth::user()->username ?? 'Usuario DDU' }}</p>
-                            <p class="text-xs text-gray-500 truncate">{{ Auth::user()->username ?? Auth::user()->email }}</p>
+                            <p class="font-medium text-white text-sm truncate">{{ Auth::user()->full_name ?? Auth::user()->username ?? 'Usuario DDU' }}</p>
+                            <p class="text-xs text-white/70 truncate">{{ Auth::user()->username ?? Auth::user()->email }}</p>
                         @endif
                     </div>
                 </div>
@@ -154,10 +158,10 @@
             </div>
 
             <!-- Logout -->
-            <div class="absolute bottom-0 w-64 p-4 border-t border-gray-200 bg-white">
+            <div class="absolute bottom-0 w-64 p-4 border-t border-white/10" style="background: rgba(0, 0, 0, 0.2);">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="w-full flex items-center space-x-3 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    <button type="submit" class="w-full flex items-center space-x-3 px-3 py-2 text-left text-sm text-white hover:bg-white/10 rounded-lg transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                         </svg>
@@ -170,16 +174,16 @@
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden">
             <!-- Top Bar -->
-            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+            <header class="shadow-sm border-b border-gray-200 px-6 py-4" style="background: linear-gradient(90deg, #1F2A4E 0%, #233771 50%, #45539F 100%);">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-900">@yield('page-title', 'Dashboard')</h2>
-                        <p class="text-sm text-gray-500 mt-1">@yield('page-description', 'Panel de control DDU')</p>
+                        <h2 class="text-2xl font-bold text-white">@yield('page-title', 'Dashboard')</h2>
+                        <p class="text-sm text-white/80 mt-1">@yield('page-description', 'Panel de control DDU')</p>
                     </div>
 
                     <div class="flex items-center space-x-4">
                         <!-- Notifications -->
-                        <button class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-3.5-3.5a8.38 8.38 0 010-11L18 1h-5a8.38 8.38 0 00-6 2.5A8.38 8.38 0 001 1h5l1.5 1.5a8.38 8.38 0 000 11L6 17h5a8.38 8.38 0 006-2.5A8.38 8.38 0 0023 17h-5"></path>
                             </svg>
@@ -187,7 +191,7 @@
 
                         <!-- User Menu -->
                         <div class="flex items-center space-x-2">
-                            <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--ddu-gradient);">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: linear-gradient(135deg, #6DDEDD 0%, #6F78E4 100%);">
                                 <span class="text-white font-semibold text-sm">{{ substr(Auth::user()->name ?? Auth::user()->email, 0, 1) }}</span>
                             </div>
                         </div>

@@ -3,11 +3,19 @@
 /* Importación de Google Fonts - Lato */
 @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
 
-/* Variables CSS para colores DDU */
+/* Variables CSS para colores DDU - Paleta Institucional */
 :root {
-    --ddu-lavanda: #6F78E4;
     --ddu-aqua: #6DDEDD;
-    --ddu-gradient: linear-gradient(135deg, var(--ddu-lavanda) 0%, var(--ddu-aqua) 100%);
+    --ddu-lavanda: #546CB1;
+    --ddu-navy-dark: #1F2A4E;
+    --ddu-navy: #233771;
+    --ddu-blue: #45539F;
+    --ddu-purple: #6F78E4;
+
+    /* Degradado institucional libre */
+    --ddu-gradient: linear-gradient(135deg, #6DDEDD 0%, #546CB1 20%, #1F2A4E 40%, #233771 60%, #45539F 80%, #6F78E4 100%);
+    --ddu-gradient-soft: linear-gradient(135deg, #6DDEDD 0%, #546CB1 50%, #6F78E4 100%);
+    --ddu-gradient-overlay: linear-gradient(135deg, rgba(109,222,221,0.9) 0%, rgba(84,108,177,0.9) 50%, rgba(111,120,228,0.9) 100%);
 }
 
 /* Definición de familias tipográficas */
@@ -31,21 +39,43 @@
 }
 
 /* Clases de utilidad para colores */
-.text-ddu-lavanda { color: var(--ddu-lavanda); }
 .text-ddu-aqua { color: var(--ddu-aqua); }
-.bg-ddu-lavanda { background-color: var(--ddu-lavanda); }
-.bg-ddu-aqua { background-color: var(--ddu-aqua); }
-.border-ddu-lavanda { border-color: var(--ddu-lavanda); }
-.border-ddu-aqua { border-color: var(--ddu-aqua); }
+.text-ddu-lavanda { color: var(--ddu-lavanda); }
+.text-ddu-navy-dark { color: var(--ddu-navy-dark); }
+.text-ddu-navy { color: var(--ddu-navy); }
+.text-ddu-blue { color: var(--ddu-blue); }
+.text-ddu-purple { color: var(--ddu-purple); }
 
-/* Gradient background */
+.bg-ddu-aqua { background-color: var(--ddu-aqua); }
+.bg-ddu-lavanda { background-color: var(--ddu-lavanda); }
+.bg-ddu-navy-dark { background-color: var(--ddu-navy-dark); }
+.bg-ddu-navy { background-color: var(--ddu-navy); }
+.bg-ddu-blue { background-color: var(--ddu-blue); }
+.bg-ddu-purple { background-color: var(--ddu-purple); }
+
+.border-ddu-aqua { border-color: var(--ddu-aqua); }
+.border-ddu-lavanda { border-color: var(--ddu-lavanda); }
+.border-ddu-navy-dark { border-color: var(--ddu-navy-dark); }
+.border-ddu-navy { border-color: var(--ddu-navy); }
+.border-ddu-blue { border-color: var(--ddu-blue); }
+.border-ddu-purple { border-color: var(--ddu-purple); }
+
+/* Gradient backgrounds */
 .bg-ddu-gradient {
     background: var(--ddu-gradient);
 }
 
+.bg-ddu-gradient-soft {
+    background: var(--ddu-gradient-soft);
+}
+
+.bg-ddu-gradient-overlay {
+    background: var(--ddu-gradient-overlay);
+}
+
 /* Efectos y transiciones personalizadas */
 .ddu-button {
-    background: var(--ddu-gradient);
+    background: var(--ddu-gradient-soft);
     color: white;
     border: none;
     border-radius: 12px;
@@ -55,12 +85,13 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(111, 120, 228, 0.3);
+    box-shadow: 0 4px 15px rgba(84, 108, 177, 0.3);
 }
 
 .ddu-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(111, 120, 228, 0.4);
+    box-shadow: 0 6px 20px rgba(84, 108, 177, 0.5);
+    background: var(--ddu-gradient);
 }
 
 .ddu-input {
@@ -73,9 +104,9 @@
 }
 
 .ddu-input:focus {
-    border-color: var(--ddu-aqua);
+    border-color: var(--ddu-lavanda);
     background-color: white;
-    box-shadow: 0 0 0 3px rgba(109, 222, 221, 0.1);
+    box-shadow: 0 0 0 3px rgba(84, 108, 177, 0.15);
     outline: none;
 }
 
@@ -84,7 +115,7 @@
     font-family: 'Inter', sans-serif;
     font-weight: 700;
     font-size: 4rem;
-    background: var(--ddu-gradient);
+    background: var(--ddu-gradient-soft);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
