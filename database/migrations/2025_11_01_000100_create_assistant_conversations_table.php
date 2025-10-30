@@ -10,10 +10,12 @@ return new class extends Migration
     {
         Schema::create('assistant_conversations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->uuid('user_id');
             $table->string('title')->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
     }
 

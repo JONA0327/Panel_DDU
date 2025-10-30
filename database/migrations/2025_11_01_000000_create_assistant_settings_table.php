@@ -10,10 +10,12 @@ return new class extends Migration
     {
         Schema::create('assistant_settings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->uuid('user_id');
             $table->text('openai_api_key')->nullable();
             $table->boolean('enable_drive_calendar')->default(true);
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
     }
 
