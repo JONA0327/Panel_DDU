@@ -194,4 +194,82 @@ class MeetingGroupController extends Controller
             })
             ->exists();
     }
+
+    /**
+     * Delete a group and remove all associated data.
+     */
+    public function destroy(MeetingGroup $group): RedirectResponse
+    {
+        $user = auth()->user();
+
+        // Verificar que el usuario es el propietario del grupo
+        if ($group->owner_id !== $user->id) {
+            return redirect()->back()->withErrors(['error' => 'No tienes permisos para eliminar este grupo.']);
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            // Obtener el nombre del grupo antes de eliminarlo
+            $groupName = $group->name;
+            $membersCount = $group->members->count();
+            $meetingsCount = $group->meetings->count();
+
+            // Eliminar las relaciones con reuniones (meeting_group_meeting)
+            $group->meetings()->detach();
+
+            // Eliminar las relaciones con miembros (meeting_group_user)
+            $group->members()->detach();
+
+            // Eliminar el grupo
+            $group->delete();
+
+            DB::commit();
+
+            return redirect()->route('grupos.index')->with('status', 
+                "El grupo \"{$groupName}\" ha sido eliminado correctamente. Se removieron {$membersCount} miembros y se dejaron de compartir {$meetingsCount} reuniones."
+            );
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return redirect()->back()->withErrors(['error' => 'Ocurrió un error al eliminar el grupo. Inténtalo de nuevo.']);
+        }
+    }
+
+    /**
+     * Detach a meeting from a group (stop sharing).
+     */
+    public function detachMeeting(MeetingGroup $group, MeetingTranscription $meeting): RedirectResponse
+    {
+        $user = auth()->user();
+
+        // Verificar que el usuario puede gestionar esta reunión
+        if (!$this->canManageMeeting($meeting, $user)) {
+            return redirect()->back()->withErrors(['error' => 'No tienes permisos para dejar de compartir esta reunión.']);
+        }
+
+        // Verificar que la reunión esté compartida en el grupo
+        if (!$group->meetings()->where('transcriptions_laravel.id', $meeting->id)->exists()) {
+            return redirect()->back()->withErrors(['error' => 'Esta reunión no está compartida en el grupo especificado.']);
+        }
+
+        // Verificar que el usuario que trata de dejar de compartir sea quien la compartió originalmente
+        $pivot = $group->meetings()->where('transcriptions_laravel.id', $meeting->id)->first();
+        if ($pivot && $pivot->pivot->shared_by !== $user->id) {
+            return redirect()->back()->withErrors(['error' => 'Solo quien compartió la reunión puede dejar de compartirla.']);
+        }
+
+        try {
+            // Quitar la reunión del grupo
+            $group->meetings()->detach($meeting->id);
+
+            return redirect()->back()->with('status', 
+                "La reunión \"{$meeting->meeting_name}\" ya no se comparte con el grupo \"{$group->name}\"."
+            );
+
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Ocurrió un error al dejar de compartir la reunión. Inténtalo de nuevo.']);
+        }
+    }
 }

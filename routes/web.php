@@ -34,7 +34,9 @@ Route::middleware(['auth', 'verified', 'ddu.member'])->group(function () {
     Route::get('/meeting-details/{transcriptionId}', [MeetingDetailsController::class, 'show'])->name('meetings.details');
     Route::get('/grupos', [MeetingGroupController::class, 'index'])->name('grupos.index');
     Route::post('/grupos', [MeetingGroupController::class, 'store'])->name('grupos.store');
+    Route::delete('/grupos/{group}', [MeetingGroupController::class, 'destroy'])->name('grupos.destroy');
     Route::post('/grupos/{group}/miembros', [MeetingGroupController::class, 'storeMember'])->name('grupos.members.store');
+    Route::delete('/grupos/{group}/meetings/{meeting}', [MeetingGroupController::class, 'detachMeeting'])->name('grupos.meetings.detach');
     Route::get('/asistente', [App\Http\Controllers\DashboardController::class, 'asistente'])->name('asistente.index');
 
     // Rutas para administración de miembros (solo administradores)

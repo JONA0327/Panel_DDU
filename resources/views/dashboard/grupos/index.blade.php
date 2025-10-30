@@ -71,9 +71,18 @@
                                 {{ $group->members_count }} {{ Str::plural('miembro', $group->members_count) }} · {{ $group->meetings->count() }} {{ Str::plural('reunión', $group->meetings->count()) }}
                             </p>
                         </div>
-                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white border border-ddu-aqua text-ddu-navy-dark">
-                            Grupo activo
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white border border-ddu-aqua text-ddu-navy-dark">
+                                Grupo activo
+                            </span>
+                            <button onclick="confirmDeleteGroup({{ $group->id }}, '{{ addslashes($group->name) }}')" 
+                                    class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200" 
+                                    title="Eliminar grupo">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     @if ($group->description)
@@ -132,11 +141,23 @@
                                                         </p>
                                                     @endif
                                                 </div>
-                                                <button
-                                                    onclick="showMeetingDetails('{{ $meeting->id }}')"
-                                                    class="ml-3 text-xs px-2 py-1 rounded-full bg-ddu-lavanda/10 text-ddu-lavanda font-semibold hover:bg-ddu-lavanda/20 transition-colors cursor-pointer">
-                                                    Ver detalles
-                                                </button>
+                                                <div class="flex items-center gap-2 ml-3">
+                                                    <button
+                                                        onclick="showMeetingDetails('{{ $meeting->id }}')"
+                                                        class="text-xs px-2 py-1 rounded-full bg-ddu-lavanda/10 text-ddu-lavanda font-semibold hover:bg-ddu-lavanda/20 transition-colors cursor-pointer">
+                                                        Ver detalles
+                                                    </button>
+                                                    @if ($meeting->pivot->shared_by == auth()->id())
+                                                        <button
+                                                            onclick="confirmUnshareMeeting({{ $meeting->id }}, {{ $group->id }}, '{{ addslashes($meeting->meeting_name) }}', '{{ addslashes($group->name) }}')"
+                                                            class="text-xs px-2 py-1 rounded-full bg-red-50 text-red-600 font-semibold hover:bg-red-100 transition-colors"
+                                                            title="Dejar de compartir">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                            </svg>
+                                                        </button>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </li>
                                     @endforeach
@@ -161,6 +182,60 @@
         function showMeetingDetails(meetingId) {
             // Redirigir a la página de reuniones con el modal abierto para esa reunión específica
             window.location.href = "{{ route('reuniones.index') }}?show=" + meetingId;
+        }
+
+        function confirmDeleteGroup(groupId, groupName) {
+            if (confirm(`¿Estás seguro de que quieres eliminar el grupo "${groupName}"?\n\nEsta acción:\n• Eliminará el grupo permanentemente\n• Sacará a todos los miembros del grupo\n• Quitará el acceso a todas las reuniones compartidas\n• No se puede deshacer\n\n¿Continuar?`)) {
+                // Crear un formulario oculto para enviar la petición DELETE
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/grupos/${groupId}`;
+                form.style.display = 'none';
+
+                // Token CSRF
+                const csrfToken = document.createElement('input');
+                csrfToken.type = 'hidden';
+                csrfToken.name = '_token';
+                csrfToken.value = '{{ csrf_token() }}';
+                form.appendChild(csrfToken);
+
+                // Método DELETE
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'DELETE';
+                form.appendChild(methodInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function confirmUnshareMeeting(meetingId, groupId, meetingName, groupName) {
+            if (confirm(`¿Dejar de compartir "${meetingName}" con el grupo "${groupName}"?\n\nLos miembros del grupo perderán acceso a esta reunión.`)) {
+                // Crear un formulario oculto para enviar la petición DELETE
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/grupos/${groupId}/meetings/${meetingId}`;
+                form.style.display = 'none';
+
+                // Token CSRF
+                const csrfToken = document.createElement('input');
+                csrfToken.type = 'hidden';
+                csrfToken.name = '_token';
+                csrfToken.value = '{{ csrf_token() }}';
+                form.appendChild(csrfToken);
+
+                // Método DELETE
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'DELETE';
+                form.appendChild(methodInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
         }
     </script>
 @endsection

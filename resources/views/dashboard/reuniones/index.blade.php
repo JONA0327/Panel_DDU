@@ -662,10 +662,10 @@
             </div>
         </div>
     </div>
-    <!-- Modal de detalles de la reunión -->
+    <!-- Modal de detalles de la reunión con pestañas -->
     <div id="meeting-modal" class="ju-modal modal-oculto">
         <div class="ju-modal-backdrop"></div>
-        <div class="modal-contenido">
+        <div class="modal-contenido max-w-4xl">
             <button id="cerrarModal" type="button" class="modal-cerrar" aria-label="Cerrar modal">
                 &times;
             </button>
@@ -677,25 +677,105 @@
                 </div>
             </div>
 
-            <div id="modal-data-content" class="space-y-6">
-                <div>
-                    <h2 class="text-2xl font-semibold text-gray-900">Resumen de la Reunión</h2>
-                    <p id="modal-summary" class="mt-2 text-gray-600"></p>
+            <div id="modal-data-content">
+                <!-- Header del Modal -->
+                <div class="mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-900">Detalles de la Reunión</h2>
+                    <p class="text-gray-600 mt-1">Información completa y transcripción</p>
                 </div>
 
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900">Audio de la Reunión</h3>
-                    <audio id="modal-audio-player" controls class="w-full mt-3"></audio>
+                <!-- Navegación de pestañas -->
+                <div class="border-b border-gray-200 mb-6">
+                    <nav class="flex space-x-8">
+                        <button type="button" 
+                                class="tab-button tab-active py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+                                data-tab="resumen">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <span>Resumen</span>
+                            </div>
+                        </button>
+                        <button type="button" 
+                                class="tab-button py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+                                data-tab="puntos-clave">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                                </svg>
+                                <span>Puntos Clave</span>
+                            </div>
+                        </button>
+                        <button type="button" 
+                                class="tab-button py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+                                data-tab="transcripcion">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                </svg>
+                                <span>Transcripción</span>
+                            </div>
+                        </button>
+                    </nav>
                 </div>
 
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900">Puntos Clave</h3>
-                    <ul id="modal-key-points" class="mt-3 space-y-2 list-disc list-inside text-gray-700"></ul>
-                </div>
+                <!-- Contenido de las pestañas -->
+                <div class="tab-content">
+                    <!-- Pestaña 1: Resumen -->
+                    <div id="tab-resumen" class="tab-pane tab-active">
+                        <div class="space-y-6">
+                            <!-- Resumen del contenido -->
+                            <div class="bg-gradient-to-r from-ddu-lavanda/10 via-ddu-aqua/5 to-ddu-lavanda/10 rounded-xl p-6 border border-ddu-lavanda/20">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-ddu-lavanda" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    Resumen de la Reunión
+                                </h3>
+                                <p id="modal-summary" class="text-gray-700 leading-relaxed"></p>
+                            </div>
+                            
+                            <!-- Reproductor de audio -->
+                            <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-ddu-aqua" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                                    </svg>
+                                    Audio de la Reunión
+                                </h3>
+                                <div class="bg-gradient-to-r from-ddu-aqua/5 to-ddu-lavanda/5 rounded-lg p-4">
+                                    <audio id="modal-audio-player" controls class="w-full"></audio>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900">Transcripción</h3>
-                    <div id="modal-segments" class="mt-3 space-y-3 text-gray-700"></div>
+                    <!-- Pestaña 2: Puntos Clave -->
+                    <div id="tab-puntos-clave" class="tab-pane" style="display: none;">
+                        <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border border-green-200">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                                </svg>
+                                Puntos Clave de la Reunión
+                            </h3>
+                            <ul id="modal-key-points" class="space-y-3"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Pestaña 3: Transcripción -->
+                    <div id="tab-transcripcion" class="tab-pane" style="display: none;">
+                        <div class="bg-gradient-to-r from-ddu-lavanda/5 to-ddu-aqua/5 rounded-xl p-6 border border-ddu-lavanda/20">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-ddu-lavanda" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                </svg>
+                                Transcripción Completa
+                            </h3>
+                            <div id="modal-segments" class="space-y-4 max-h-96 overflow-y-auto"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -824,6 +904,116 @@ body.modal-open {
 .modal-cerrar:hover {
     transform: scale(1.1);
     color: #111827;
+}
+
+/* Estilos para pestañas del modal */
+.tab-button {
+    border-bottom-color: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    position: relative;
+}
+
+.tab-button:hover {
+    color: #546CB1;
+    border-bottom-color: #546CB1;
+}
+
+.tab-button.tab-active {
+    color: #546CB1;
+    border-bottom-color: #546CB1;
+    font-weight: 600;
+}
+
+.tab-button.tab-active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #6DDEDD 0%, #546CB1 100%);
+    border-radius: 1px;
+}
+
+.tab-pane {
+    animation: fadeInTab 0.3s ease-in-out;
+}
+
+.tab-pane.tab-active {
+    display: block !important;
+}
+
+@keyframes fadeInTab {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mejoras para el contenido de las pestañas */
+#modal-key-points li {
+    display: flex;
+    align-items: start;
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+#modal-key-points li:hover {
+    border-color: #546CB1;
+    box-shadow: 0 4px 6px rgba(84, 108, 177, 0.1);
+    transform: translateY(-1px);
+}
+
+#modal-key-points li::before {
+    content: '✓';
+    color: #10b981;
+    font-weight: bold;
+    margin-right: 12px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #dcfdf7;
+    border-radius: 50%;
+    font-size: 12px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+#modal-segments > div {
+    background: white;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    border-left: 4px solid #546CB1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+#modal-segments > div:hover {
+    border-color: #6DDEDD;
+    border-left-color: #6DDEDD;
+    box-shadow: 0 4px 6px rgba(109, 222, 221, 0.1);
+}
+
+#modal-segments strong {
+    color: #546CB1;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #f3f4f6;
 }
 
 body.modal-open {
@@ -987,7 +1177,37 @@ function hideCreateMeetingModal() {
     }
 }
 
+// Funcionalidad de pestañas del modal (función global)
+function initializeTabs() {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetTab = button.dataset.tab;
+
+            // Remover clase activa de todos los botones y paneles
+            tabButtons.forEach(btn => btn.classList.remove('tab-active'));
+            tabPanes.forEach(pane => {
+                pane.classList.remove('tab-active');
+                pane.style.display = 'none';
+            });
+
+            // Activar el botón y panel seleccionado
+            button.classList.add('tab-active');
+            const targetPane = document.getElementById(`tab-${targetTab}`);
+            if (targetPane) {
+                targetPane.style.display = 'block';
+                targetPane.classList.add('tab-active');
+            }
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar pestañas al cargar la página
+    initializeTabs();
+
     const createMeetingForm = document.getElementById('createMeetingForm');
     if (createMeetingForm) {
         createMeetingForm.addEventListener('submit', function (event) {
@@ -1484,6 +1704,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 emptyMessage.textContent = 'No hay transcripción disponible.';
                 segmentsEl.appendChild(emptyMessage);
             }
+        }
+
+        // Inicializar pestañas después de cargar los datos
+        initializeTabs();
+        
+        // Mostrar la primera pestaña por defecto (Resumen)
+        const firstTab = document.querySelector('.tab-button[data-tab="resumen"]');
+        const firstPane = document.getElementById('tab-resumen');
+        if (firstTab && firstPane) {
+            // Ocultar todas las pestañas primero
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.style.display = 'none';
+                pane.classList.remove('tab-active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('tab-active');
+            });
+            
+            // Mostrar la primera pestaña
+            firstTab.classList.add('tab-active');
+            firstPane.style.display = 'block';
+            firstPane.classList.add('tab-active');
         }
     };
 
