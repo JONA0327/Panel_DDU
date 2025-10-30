@@ -1,94 +1,253 @@
 @extends('layouts.dashboard')
 
 @section('page-title', 'Asistente DDU')
-@section('page-description', 'Tu asistente inteligente para optimizar el trabajo')
+@section('page-description', 'Tu asistente inteligente para reuniones, documentos y calendario')
+
+@php
+    use Illuminate\Support\Str;
+@endphp
 
 @section('content')
 <div class="space-y-6 fade-in">
-    <!-- Header del Asistente -->
-    <div class="text-center">
-        <div class="w-20 h-20 bg-gradient-to-r from-ddu-lavanda to-ddu-aqua rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-            </svg>
+    <style>
+        .suggestion-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(209, 213, 219, 1);
+            background-color: rgba(243, 244, 246, 1);
+            color: rgba(55, 65, 81, 1);
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-btn:hover {
+            background-color: rgba(84, 108, 177, 0.12);
+            border-color: rgba(84, 108, 177, 1);
+            color: rgba(84, 108, 177, 1);
+        }
+    </style>
+
+    <div class="ddu-card border-l-4 {{ $apiConnected ? 'border-green-500' : 'border-red-500' }}">
+        <div class="flex items-start justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">
+                    {{ $apiConnected ? 'API de OpenAI conectada' : 'API de OpenAI no conectada' }}
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">
+                    {{ $apiConnected
+                        ? 'El asistente está listo para responder usando tu propia API de ChatGPT.'
+                        : 'Configura tu API key de ChatGPT en la sección “Configuración del asistente” del panel lateral para activar las respuestas inteligentes.' }}
+                </p>
+            </div>
+            <div class="text-xs text-gray-500">
+                Última actualización: {{ now()->format('d/m/Y H:i') }}
+            </div>
         </div>
-        <h2 class="text-3xl font-bold text-gray-900 mb-2">Asistente DDU</h2>
-        <p class="text-lg text-gray-600">Tu asistente inteligente para optimizar el trabajo en equipo</p>
     </div>
 
-    <!-- Chat del Asistente -->
-    <div class="max-w-4xl mx-auto">
-        <div class="ddu-card">
-            <!-- Área de conversación -->
-            <div id="chatArea" class="h-96 overflow-y-auto p-6 space-y-4">
-                <!-- Mensaje de bienvenida -->
-                <div class="flex items-start space-x-3">
-                    <div class="w-8 h-8 bg-gradient-to-r from-ddu-lavanda to-ddu-aqua rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                        </svg>
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <aside class="space-y-4 lg:col-span-1">
+            <div class="ddu-card">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Conversaciones</h3>
+                    <button id="newConversationBtn" class="btn btn-secondary text-xs px-3 py-1">Nueva</button>
+                </div>
+                <ul id="conversationList" class="mt-4 space-y-2 max-h-64 overflow-y-auto">
+                    @forelse($conversations as $conversation)
+                        <li>
+                            <button class="conversation-item w-full text-left px-3 py-2 rounded-lg border transition"
+                                    data-id="{{ $conversation->id }}"
+                                    data-title="{{ $conversation->title ?? 'Conversación sin título' }}"
+                                    @class([
+                                        'border-ddu-lavanda bg-ddu-lavanda/10 text-ddu-lavanda' => optional($activeConversation)->id === $conversation->id,
+                                        'border-transparent hover:border-ddu-lavanda/40 text-gray-700' => optional($activeConversation)->id !== $conversation->id,
+                                    ])>
+                                <p class="text-sm font-medium truncate">{{ $conversation->title ?? 'Conversación sin título' }}</p>
+                                <p class="text-xs text-gray-500">{{ $conversation->messages_count }} mensajes</p>
+                            </button>
+                        </li>
+                    @empty
+                        <li class="text-sm text-gray-500">Inicia tu primera conversación con el asistente.</li>
+                    @endforelse
+                </ul>
+            </div>
+
+            <div class="ddu-card">
+                <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Configuración del asistente</h3>
+                <form method="POST" action="{{ route('assistant.settings.update') }}" class="mt-4 space-y-4">
+                    @csrf
+                    <div>
+                        <label for="openai_api_key" class="block text-xs font-medium text-gray-600 uppercase">API Key de ChatGPT</label>
+                        <input type="password" id="openai_api_key" name="openai_api_key"
+                               value=""
+                               placeholder="sk-..."
+                               class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ddu-lavanda focus:border-ddu-lavanda"
+                               autocomplete="off">
+                        <p class="text-xs text-gray-500 mt-1">La clave se almacena cifrada y solo se usa para tus solicitudes. Deja el campo vacío para mantener la clave actual.</p>
                     </div>
-                    <div class="flex-1">
-                        <div class="bg-gray-100 rounded-lg p-4">
-                            <p class="text-gray-800">
-                                ¡Hola! Soy tu asistente DDU. Puedo ayudarte con:
-                            </p>
-                            <ul class="mt-2 text-sm text-gray-700 space-y-1">
-                                <li>• Programar y gestionar reuniones</li>
-                                <li>• Buscar información de miembros</li>
-                                <li>• Generar reportes y estadísticas</li>
-                                <li>• Responder preguntas sobre el sistema</li>
-                                <li>• Optimizar tareas y procesos</li>
-                            </ul>
-                            <p class="mt-3 text-gray-800">¿En qué puedo ayudarte hoy?</p>
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" id="enable_drive_calendar" name="enable_drive_calendar" value="1"
+                               @checked($settings->enable_drive_calendar)
+                               class="rounded border-gray-300 text-ddu-lavanda focus:ring-ddu-lavanda">
+                        <label for="enable_drive_calendar" class="text-sm text-gray-600">Usar token de Drive para integrar Google Calendar</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full">Guardar configuración</button>
+                </form>
+            </div>
+
+            <div class="ddu-card">
+                <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Contexto de reuniones</h3>
+                <p class="text-xs text-gray-500 mb-3">Selecciona reuniones o contenedores para que el asistente use sus resúmenes, puntos clave y transcripciones.</p>
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-600 uppercase">Reuniones</p>
+                        <div class="mt-2 max-h-36 overflow-y-auto space-y-2" id="meetingSelector">
+                            @foreach($meetings as $meeting)
+                                <label class="flex items-start space-x-2 text-sm text-gray-700">
+                                    <input type="checkbox" value="{{ $meeting->id }}" class="meeting-checkbox mt-1 rounded border-gray-300 text-ddu-lavanda focus:ring-ddu-lavanda">
+                                    <span>
+                                        <span class="font-medium">{{ $meeting->meeting_name ?? 'Reunión sin título' }}</span>
+                                        <span class="block text-xs text-gray-500">{{ optional($meeting->created_at)->format('d/m/Y H:i') }}</span>
+                                    </span>
+                                </label>
+                            @endforeach
                         </div>
-                        <span class="text-xs text-gray-500 mt-1 block">Asistente DDU • hace unos segundos</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-gray-600 uppercase">Contenedores</p>
+                        <div class="mt-2 max-h-36 overflow-y-auto space-y-2" id="containerSelector">
+                            @forelse($containers as $container)
+                                <label class="flex items-start space-x-2 text-sm text-gray-700">
+                                    <input type="checkbox" value="{{ $container->id }}" class="container-checkbox mt-1 rounded border-gray-300 text-ddu-lavanda focus:ring-ddu-lavanda">
+                                    <span>
+                                        <span class="font-medium">{{ $container->name }}</span>
+                                        <span class="block text-xs text-gray-500">{{ Str::limit($container->description, 70) }}</span>
+                                    </span>
+                                </label>
+                            @empty
+                                <p class="text-xs text-gray-500">No tienes contenedores configurados aún.</p>
+                            @endforelse
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Barra de entrada de chat -->
-            <div class="border-t p-4">
-                <div class="flex space-x-4">
-                    <div class="flex-1">
-                        <input type="text"
-                               id="chatInput"
-                               placeholder="Escribe tu consulta aquí..."
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ddu-lavanda focus:border-ddu-lavanda"
-                               onkeypress="handleEnterKey(event)">
-                    </div>
-                    <button id="sendButton"
-                            onclick="sendMessage()"
-                            class="btn btn-primary px-6">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+            <div class="ddu-card">
+                <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Documentos</h3>
+                <p class="text-xs text-gray-500">Sube Word, Excel, PowerPoint, TXT o imágenes. El asistente analizará su contenido y lo integrará al contexto.</p>
+                <form id="documentUploadForm" class="mt-3 space-y-3">
+                    @csrf
+                    <input type="hidden" name="conversation_id" id="documentConversationId" value="{{ optional($activeConversation)->id }}">
+                    <label class="w-full flex flex-col items-center justify-center px-3 py-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-ddu-lavanda hover:text-ddu-lavanda transition">
+                        <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                         </svg>
-                    </button>
+                        <span class="text-sm font-medium">Selecciona un archivo</span>
+                        <span class="text-xs text-gray-500">Máximo 10 MB</span>
+                        <input type="file" name="document" id="assistantDocument" class="hidden" accept=".docx,.pptx,.xlsx,.txt,.csv,.md,.png,.jpg,.jpeg,.gif">
+                    </label>
+                    <div id="documentUploadStatus" class="text-xs text-gray-500"></div>
+                </form>
+            </div>
+
+            <div class="ddu-card">
+                <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Eventos próximos</h3>
+                <p class="text-xs text-gray-500 mb-2">El asistente puede programar y consultar eventos usando tu token de Google.</p>
+                <ul class="space-y-2 max-h-40 overflow-y-auto">
+                    @forelse($calendarEvents as $event)
+                        <li class="text-sm text-gray-700">
+                            <p class="font-medium">{{ $event['summary'] }}</p>
+                            <p class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($event['start'])->translatedFormat('d M Y H:i') }} - {{ \Carbon\Carbon::parse($event['end'])->format('H:i') }}</p>
+                            @if(!empty($event['description']))
+                                <p class="text-xs text-gray-500 mt-1">{{ Str::limit($event['description'], 80) }}</p>
+                            @endif
+                        </li>
+                    @empty
+                        <li class="text-xs text-gray-500">No hay eventos programados en las próximas dos semanas.</li>
+                    @endforelse
+                </ul>
+            </div>
+        </aside>
+
+        <main class="lg:col-span-3">
+            <div class="ddu-card h-full flex flex-col">
+                <div class="flex items-center justify-between border-b border-gray-200 pb-4 mb-4">
+                    <div>
+                        <h2 id="conversationTitle" class="text-2xl font-bold text-gray-900">
+                            {{ optional($activeConversation)->title ?? 'Bienvenido al asistente DDU' }}
+                        </h2>
+                        <p class="text-sm text-gray-500">El asistente responderá siempre usando el contexto de reuniones, documentos y tu calendario.</p>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        Conversaciones totales: {{ $conversations->count() }}
+                    </div>
                 </div>
 
-                <!-- Sugerencias rápidas -->
-                <div class="mt-4">
-                    <p class="text-sm font-medium text-gray-700 mb-2">Consultas sugeridas:</p>
-                    <div class="flex flex-wrap gap-2">
-                        <button class="suggestion-btn" onclick="setSuggestion('¿Cuántas reuniones tengo esta semana?')">
-                            📅 Reuniones de esta semana
+                <div id="chatMessages" class="flex-1 overflow-y-auto space-y-4 pr-2">
+                    @if($activeConversation && $activeConversation->messages->isNotEmpty())
+                        @foreach($activeConversation->messages as $message)
+                            @continue($message->role === 'system')
+                            <div class="flex {{ $message->role === 'user' ? 'justify-end' : 'justify-start' }}">
+                                <div class="max-w-2xl">
+                                    <div class="rounded-lg px-4 py-3 {{ $message->role === 'user' ? 'bg-gradient-to-r from-ddu-lavanda to-ddu-aqua text-white' : 'bg-gray-100 text-gray-800' }}">
+                                        <p class="whitespace-pre-line text-sm">{{ $message->content }}</p>
+                                        @if(!empty($message->metadata['attachments']))
+                                            @foreach($message->metadata['attachments'] as $attachment)
+                                                @if($attachment['type'] === 'image_url')
+                                                    <img src="{{ $attachment['image_url']['url'] }}" alt="Vista previa" class="mt-3 rounded-lg max-w-xs">
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                    <span class="text-xs text-gray-500 block mt-1">
+                                        {{ $message->role === 'user' ? 'Tú' : 'Asistente DDU' }} • {{ $message->created_at->diffForHumans() }}
+                                    </span>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="bg-gray-50 border border-dashed border-gray-200 rounded-lg p-6 text-center text-sm text-gray-600">
+                            ¡Comienza escribiendo tu primera consulta para que el asistente prepare el contexto!
+                        </div>
+                    @endif
+                </div>
+
+                <div id="typingIndicator" class="hidden mt-4">
+                    <div class="flex items-center space-x-3 text-sm text-gray-500">
+                        <div class="w-8 h-8 bg-gradient-to-r from-ddu-lavanda to-ddu-aqua rounded-full flex items-center justify-center text-white">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                        </div>
+                        <span>El asistente está pensando...</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 mt-4 pt-4">
+                    <input type="hidden" id="conversationId" value="{{ optional($activeConversation)->id }}">
+                    <div class="flex items-center space-x-3">
+                        <textarea id="chatInput" rows="2" placeholder="Escribe tu consulta sobre reuniones, documentos o calendar..." class="flex-1 resize-none px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ddu-lavanda focus:border-ddu-lavanda"></textarea>
+                        <button id="sendMessageBtn" class="btn btn-primary px-6" {{ $apiConnected ? '' : 'disabled' }}>
+                            <span class="flex items-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                </svg>
+                                <span>Enviar</span>
+                            </span>
                         </button>
-                        <button class="suggestion-btn" onclick="setSuggestion('¿Quiénes son los miembros activos?')">
-                            👥 Miembros activos
-                        </button>
-                        <button class="suggestion-btn" onclick="setSuggestion('Crear una reunión para mañana')">
-                            ➕ Crear reunión
-                        </button>
-                        <button class="suggestion-btn" onclick="setSuggestion('Generar reporte de actividades')">
-                            📊 Generar reporte
-                        </button>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        <button class="suggestion-btn" data-suggestion="¿Qué reuniones importantes tengo esta semana?">📅 Reuniones esta semana</button>
+                        <button class="suggestion-btn" data-suggestion="Resume los puntos clave de la última reunión de estrategia">📝 Resumen de reunión</button>
+                        <button class="suggestion-btn" data-suggestion="Agenda una reunión de seguimiento con el equipo comercial el viernes a las 10am">⏰ Agendar reunión</button>
+                        <button class="suggestion-btn" data-suggestion="Analiza el documento más reciente que cargué y dime de qué trata">📂 Analizar documento</button>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
-
-
 
     <!-- Indicador de escritura -->
     <div id="typingIndicator" class="max-w-4xl mx-auto" style="display: none;">
@@ -113,142 +272,307 @@
 </div>
 
 <script>
-let chatHistory = [];
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    let conversationId = document.getElementById('conversationId').value || null;
 
-function handleEnterKey(event) {
-    if (event.key === 'Enter') {
-        sendMessage();
-    }
-}
+    const state = {
+        meetings: new Set(),
+        containers: new Set(),
+    };
 
-function setSuggestion(message) {
-    document.getElementById('chatInput').value = message;
-    document.getElementById('chatInput').focus();
-}
-
-function sendMessage() {
-    const input = document.getElementById('chatInput');
-    const message = input.value.trim();
-
-    if (!message) return;
-
-    // Agregar mensaje del usuario al chat
-    addMessageToChat('user', message);
-
-    // Limpiar input
-    input.value = '';
-
-    // Mostrar indicador de escritura
-    showTypingIndicator();
-
-    // Simular respuesta del asistente (aquí se conectaría con IA real)
-    setTimeout(() => {
-        hideTypingIndicator();
-        generateAssistantResponse(message);
-    }, 1500 + Math.random() * 2000); // Simular tiempo de procesamiento variable
-}
-
-function addMessageToChat(sender, message) {
-    const chatArea = document.getElementById('chatArea');
-    const messageDiv = document.createElement('div');
-
-    if (sender === 'user') {
-        messageDiv.innerHTML = `
-            <div class="flex items-start space-x-3 justify-end">
-                <div class="flex-1 max-w-xs lg:max-w-md">
-                    <div class="bg-gradient-to-r from-ddu-lavanda to-ddu-aqua text-white rounded-lg p-4">
-                        <p>${message}</p>
-                    </div>
-                    <span class="text-xs text-gray-500 mt-1 block text-right">Tú • ahora</span>
-                </div>
-                <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
-                </div>
-            </div>
-        `;
-    } else {
-        messageDiv.innerHTML = `
-            <div class="flex items-start space-x-3">
-                <div class="w-8 h-8 bg-gradient-to-r from-ddu-lavanda to-ddu-aqua rounded-full flex items-center justify-center flex-shrink-0">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <div class="bg-gray-100 rounded-lg p-4">
-                        <p class="text-gray-800">${message}</p>
-                    </div>
-                    <span class="text-xs text-gray-500 mt-1 block">Asistente DDU • ahora</span>
-                </div>
-            </div>
-        `;
-    }
-
-    chatArea.appendChild(messageDiv);
-    chatArea.scrollTop = chatArea.scrollHeight;
-}
-
-function showTypingIndicator() {
-    document.getElementById('typingIndicator').style.display = 'block';
-}
-
-function hideTypingIndicator() {
-    document.getElementById('typingIndicator').style.display = 'none';
-}
-
-function generateAssistantResponse(userMessage) {
-    const message = userMessage.toLowerCase();
-    let response;
-
-    // Respuestas basadas en el contenido del mensaje
-    if (message.includes('reunión') || message.includes('programar')) {
-        response = "Te puedo ayudar a programar una reunión. Para esto necesitaré algunos datos:\n\n• ¿Cuál es el tema de la reunión?\n• ¿Para qué fecha la necesitas?\n• ¿Qué duración aproximada?\n• ¿Quiénes deberían participar?\n\n¿Podrías proporcionarme estos detalles?";
-    } else if (message.includes('miembros') || message.includes('equipo')) {
-        response = "Actualmente hay {{ $stats['total_members'] ?? '0' }} miembros activos en el sistema DDU. Puedo ayudarte a:\n\n• Buscar información específica de un miembro\n• Mostrar la lista completa de miembros\n• Filtrar por roles (administrador, colaborador, lector)\n• Ver estadísticas del equipo\n\n¿Qué información específica necesitas?";
-    } else if (message.includes('reporte') || message.includes('estadística')) {
-        response = "Puedo generar varios tipos de reportes para ti:\n\n📊 **Reportes disponibles:**\n• Actividad de reuniones (semanal/mensual)\n• Participación de miembros\n• Estadísticas generales del sistema\n• Reporte de tareas y seguimientos\n\n¿Qué tipo de reporte te interesa generar?";
-    } else if (message.includes('semana') && message.includes('reunión')) {
-        response = "Esta semana tienes {{ $stats['esta_semana'] ?? '0' }} reuniones programadas:\n\n📅 **Próximas reuniones:**\n• Reunión semanal de equipo - Lunes 10:00 AM\n• Revisión de proyectos - Miércoles 2:00 PM\n\n¿Te gustaría ver más detalles de alguna reunión específica?";
-    } else if (message.includes('sistema') || message.includes('ayuda')) {
-        response = "El sistema DDU te permite:\n\n🎯 **Funcionalidades principales:**\n• Gestionar reuniones y participantes\n• Administrar miembros y permisos\n• Generar reportes y estadísticas\n• Usar este asistente inteligente\n\n💡 **Consejos:**\n• Usa el sidebar para navegar entre secciones\n• Los administradores tienen acceso completo\n• Puedes filtrar y buscar en todas las listas\n\n¿Hay alguna función específica que quieras conocer mejor?";
-    } else if (message.includes('perfil') || message.includes('personalizar')) {
-        response = "Para personalizar tu perfil puedes:\n\n⚙️ **Opciones de personalización:**\n• Actualizar tu información personal\n• Cambiar tu contraseña\n• Configurar notificaciones\n• Establecer preferencias de idioma\n\nPuedes acceder a estas opciones desde el menú de usuario en la esquina superior derecha. ¿Necesitas ayuda con alguna configuración específica?";
-    } else {
-        // Respuesta genérica inteligente
-        const genericResponses = [
-            "Entiendo tu consulta. ¿Podrías ser más específico sobre lo que necesitas? Puedo ayudarte con reuniones, miembros, reportes y configuración del sistema.",
-            "Estoy aquí para ayudarte. Mi especialidad es gestionar actividades DDU como reuniones, miembros y generar reportes. ¿En qué área específica puedo asistirte?",
-            "Gracias por tu consulta. Para brindarte la mejor ayuda, ¿podrías especificar si necesitas ayuda con reuniones, gestión de miembros, reportes o alguna otra funcionalidad del sistema?",
-        ];
-        response = genericResponses[Math.floor(Math.random() * genericResponses.length)];
-    }
-
-    // Agregar la respuesta al chat
-    addMessageToChat('assistant', response);
-
-    // Guardar en historial (para futuras implementaciones de contexto)
-    chatHistory.push({
-        user: userMessage,
-        assistant: response,
-        timestamp: new Date()
+    document.querySelectorAll('.meeting-checkbox').forEach((checkbox) => {
+        checkbox.addEventListener('change', (event) => {
+            const id = event.target.value;
+            if (event.target.checked) {
+                state.meetings.add(id);
+            } else {
+                state.meetings.delete(id);
+            }
+        });
     });
-}
 
-// Estilo para botones de sugerencia
-const style = document.createElement('style');
-style.textContent = `
-    .suggestion-btn {
-        @apply px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors cursor-pointer border border-gray-200;
+    document.querySelectorAll('.container-checkbox').forEach((checkbox) => {
+        checkbox.addEventListener('change', (event) => {
+            const id = event.target.value;
+            if (event.target.checked) {
+                state.containers.add(id);
+            } else {
+                state.containers.delete(id);
+            }
+        });
+    });
+
+    document.querySelectorAll('.suggestion-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+            document.getElementById('chatInput').value = button.dataset.suggestion;
+            document.getElementById('chatInput').focus();
+        });
+    });
+
+    const chatMessages = document.getElementById('chatMessages');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    async function sendMessage() {
+        const input = document.getElementById('chatInput');
+        const message = input.value.trim();
+
+        if (!message) {
+            return;
+        }
+
+        appendMessage('user', message);
+        input.value = '';
+        showTyping(true);
+
+        try {
+            const response = await fetch('{{ route('assistant.message') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    message,
+                    conversation_id: conversationId,
+                    meetings: Array.from(state.meetings),
+                    containers: Array.from(state.containers),
+                }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                appendMessage('assistant', error.error ?? 'No fue posible obtener respuesta del asistente.');
+                return;
+            }
+
+            const data = await response.json();
+            conversationId = data.conversation_id;
+            document.getElementById('conversationId').value = conversationId;
+            document.getElementById('documentConversationId').value = conversationId;
+
+            refreshMessages(data.messages);
+            upsertConversation({
+                id: conversationId,
+                title: document.getElementById('conversationTitle').textContent,
+                messages: data.messages,
+            });
+        } catch (error) {
+            console.error(error);
+            appendMessage('assistant', 'Ocurrió un error inesperado. Inténtalo nuevamente.');
+        } finally {
+            showTyping(false);
+        }
     }
-    .suggestion-btn:hover {
-        @apply bg-ddu-lavanda bg-opacity-10 border-ddu-lavanda text-ddu-lavanda;
+
+    function appendMessage(role, content, attachments = []) {
+        const wrapper = document.createElement('div');
+        wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = 'max-w-2xl';
+        bubble.innerHTML = `
+            <div class="rounded-lg px-4 py-3 ${role === 'user' ? 'bg-gradient-to-r from-ddu-lavanda to-ddu-aqua text-white' : 'bg-gray-100 text-gray-800'}">
+                <p class="whitespace-pre-line text-sm">${content}</p>
+            </div>
+            <span class="text-xs text-gray-500 block mt-1">${role === 'user' ? 'Tú' : 'Asistente DDU'} • ahora</span>
+        `;
+
+        if (attachments.length > 0) {
+            const container = bubble.querySelector('div');
+            attachments.forEach((attachment) => {
+                if (attachment.type === 'image_url') {
+                    const img = document.createElement('img');
+                    img.src = attachment.image_url.url;
+                    img.alt = 'Vista previa';
+                    img.className = 'mt-3 rounded-lg max-w-xs';
+                    container.appendChild(img);
+                }
+            });
+        }
+
+        wrapper.appendChild(bubble);
+        chatMessages.appendChild(wrapper);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
-    .modal {
-        @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+
+    function refreshMessages(messages) {
+        chatMessages.innerHTML = '';
+        messages.forEach((message) => {
+            if (message.role === 'system') {
+                return;
+            }
+            appendMessage(message.role, message.content, (message.metadata && message.metadata.attachments) ? message.metadata.attachments : []);
+        });
     }
-`;
-document.head.appendChild(style);
+
+    function showTyping(visible) {
+        typingIndicator.classList.toggle('hidden', !visible);
+    }
+
+    document.getElementById('sendMessageBtn').addEventListener('click', sendMessage);
+    document.getElementById('chatInput').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+        }
+    });
+
+    const conversationListElement = document.getElementById('conversationList');
+
+    function markActiveConversation(id) {
+        conversationListElement.querySelectorAll('button').forEach((button) => {
+            if (button.dataset.id === String(id)) {
+                button.classList.add('border-ddu-lavanda', 'bg-ddu-lavanda/10', 'text-ddu-lavanda');
+                button.classList.remove('border-transparent', 'text-gray-700');
+            } else {
+                button.classList.remove('border-ddu-lavanda', 'bg-ddu-lavanda/10', 'text-ddu-lavanda');
+                button.classList.add('border-transparent', 'text-gray-700');
+            }
+        });
+    }
+
+    function getDisplayMessageCount(conversation) {
+        const rawCount = conversation.messages_count ?? (conversation.messages ? conversation.messages.length : 0);
+
+        return Math.max(0, rawCount - 1);
+    }
+
+    function renderConversationItem(conversation) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.id = conversation.id;
+        button.dataset.title = conversation.title || 'Conversación sin título';
+        button.className = 'conversation-item w-full text-left px-3 py-2 rounded-lg border transition border-transparent text-gray-700 hover:border-ddu-lavanda/40';
+        const count = getDisplayMessageCount(conversation);
+        const label = count === 1 ? 'mensaje' : 'mensajes';
+
+        button.innerHTML = `
+            <p class="text-sm font-medium truncate">${conversation.title || 'Conversación sin título'}</p>
+            <p class="text-xs text-gray-500">${count} ${label}</p>
+        `;
+
+        const listItem = document.createElement('li');
+        listItem.appendChild(button);
+
+        return listItem;
+    }
+
+    function upsertConversation(conversation) {
+        let existing = conversationListElement.querySelector(`button[data-id="${conversation.id}"]`);
+
+        if (existing) {
+            existing.dataset.title = conversation.title || 'Conversación sin título';
+            const count = getDisplayMessageCount(conversation);
+            const label = count === 1 ? 'mensaje' : 'mensajes';
+            existing.innerHTML = `
+                <p class="text-sm font-medium truncate">${conversation.title || 'Conversación sin título'}</p>
+                <p class="text-xs text-gray-500">${count} ${label}</p>
+            `;
+        } else {
+            const item = renderConversationItem(conversation);
+            conversationListElement.insertBefore(item, conversationListElement.firstChild);
+        }
+
+        markActiveConversation(conversation.id);
+    }
+
+    conversationListElement.addEventListener('click', async (event) => {
+        const button = event.target.closest('button[data-id]');
+        if (!button) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`{{ url('asistente/conversaciones') }}/${button.dataset.id}`);
+            const data = await response.json();
+            conversationId = data.conversation.id;
+            document.getElementById('conversationId').value = conversationId;
+            document.getElementById('documentConversationId').value = conversationId;
+            document.getElementById('conversationTitle').textContent = data.conversation.title || 'Conversación sin título';
+            refreshMessages(data.conversation.messages);
+            upsertConversation(data.conversation);
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    document.getElementById('newConversationBtn').addEventListener('click', async () => {
+        try {
+            const response = await fetch('{{ route('assistant.conversations.create') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+            });
+            const data = await response.json();
+            conversationId = data.conversation.id;
+            document.getElementById('conversationId').value = conversationId;
+            document.getElementById('documentConversationId').value = conversationId;
+            document.getElementById('conversationTitle').textContent = data.conversation.title || 'Nueva conversación';
+            refreshMessages(data.conversation.messages);
+            upsertConversation(data.conversation);
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    if (conversationId) {
+        markActiveConversation(conversationId);
+    }
+
+    document.getElementById('assistantDocument').addEventListener('change', async (event) => {
+        if (!conversationId) {
+            document.getElementById('documentUploadStatus').textContent = 'Crea o selecciona una conversación antes de subir documentos.';
+            event.target.value = '';
+            return;
+        }
+
+        const file = event.target.files[0];
+        if (!file) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('document', file);
+        formData.append('conversation_id', conversationId);
+
+        document.getElementById('documentUploadStatus').textContent = 'Analizando documento...';
+
+        try {
+            const response = await fetch('{{ route('assistant.documents.store') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                document.getElementById('documentUploadStatus').textContent = error.message ?? 'No se pudo analizar el documento.';
+                return;
+            }
+
+            const data = await response.json();
+            document.getElementById('documentUploadStatus').textContent = 'Documento analizado y agregado al contexto.';
+
+            try {
+                const conversationResponse = await fetch(`{{ url('asistente/conversaciones') }}/${conversationId}`);
+                const conversationData = await conversationResponse.json();
+                refreshMessages(conversationData.conversation.messages);
+                upsertConversation(conversationData.conversation);
+            } catch (error) {
+                console.error(error);
+                appendMessage('assistant', data.summary ? `Resumen del documento: ${data.summary}` : 'El documento fue analizado y ahora forma parte del contexto.');
+            }
+        } catch (error) {
+            console.error(error);
+            document.getElementById('documentUploadStatus').textContent = 'Ocurrió un error al subir el documento.';
+        } finally {
+            event.target.value = '';
+        }
+    });
 </script>
 @endsection
