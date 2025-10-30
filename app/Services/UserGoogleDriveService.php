@@ -75,6 +75,17 @@ class UserGoogleDriveService
         return null;
     }
 
+    public function getValidAccessToken(): string
+    {
+        $this->ensureValidAccessToken();
+
+        if (! $this->accessToken) {
+            throw new \RuntimeException('No hay un access token válido disponible.');
+        }
+
+        return $this->accessToken;
+    }
+
     private function initialiseAccessToken(): void
     {
         $payload = $this->decodeStoredToken($this->token->access_token);

@@ -136,4 +136,14 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(MeetingGroup::class, 'meeting_group_user')->withTimestamps();
     }
+
+    public function assistantSetting(): HasOne
+    {
+        return $this->hasOne(AssistantSetting::class);
+    }
+
+    public function assistantConversations(): HasMany
+    {
+        return $this->hasMany(AssistantConversation::class);
+    }
 }
