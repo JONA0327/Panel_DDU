@@ -41,10 +41,12 @@ Route::middleware(['auth', 'verified', 'ddu.member'])->group(function () {
     Route::delete('/grupos/{group}/meetings/{meeting}', [MeetingGroupController::class, 'detachMeeting'])->name('grupos.meetings.detach');
     Route::prefix('asistente')->name('assistant.')->group(function () {
         Route::get('/', [AssistantController::class, 'index'])->name('index');
+        Route::get('/configuracion', [AssistantSettingsController::class, 'index'])->name('settings.index');
         Route::post('/mensaje', [AssistantController::class, 'sendMessage'])->name('message');
         Route::post('/conversaciones', [AssistantController::class, 'createConversation'])->name('conversations.create');
         Route::get('/conversaciones/{conversation}', [AssistantController::class, 'showConversation'])->name('conversations.show');
         Route::delete('/conversaciones/{conversation}', [AssistantController::class, 'deleteConversation'])->name('conversations.delete');
+        Route::put('/conversaciones/{conversation}', [AssistantController::class, 'updateConversation'])->name('conversations.update');
         Route::post('/documentos', [AssistantController::class, 'uploadDocument'])->name('documents.store');
         Route::post('/configuracion', [AssistantSettingsController::class, 'update'])->name('settings.update');
     });

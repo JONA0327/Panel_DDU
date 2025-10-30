@@ -31,4 +31,17 @@ class AssistantConversation extends Model
     {
         return $this->hasMany(AssistantDocument::class);
     }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function (AssistantConversation $conversation) {
+            // Eliminar todos los mensajes asociados
+            $conversation->messages()->delete();
+            
+            // Eliminar todos los documentos asociados
+            $conversation->documents()->delete();
+        });
+    }
 }

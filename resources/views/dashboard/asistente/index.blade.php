@@ -38,7 +38,7 @@
                 <p class="text-sm text-gray-600 mt-1">
                     {{ $apiConnected
                         ? 'El asistente está listo para responder usando tu propia API de ChatGPT.'
-                        : 'Configura tu API key de ChatGPT en la sección “Configuración del asistente” del panel lateral para activar las respuestas inteligentes.' }}
+                        : 'Configura tu API key de ChatGPT en la página de configuración para activar las respuestas inteligentes.' }}
                 </p>
             </div>
             <div class="text-xs text-gray-500">
@@ -46,16 +46,7 @@
             </div>
         </div>
 
-        {{-- Debug info temporal --}}
-        @if(isset($debugInfo))
-            <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                <strong>Debug Info:</strong><br>
-                Settings exists: {{ $debugInfo['settings_exists'] ? 'Sí' : 'No' }}<br>
-                API Key exists: {{ $debugInfo['api_key_exists'] ? 'Sí' : 'No' }}<br>
-                API Key length: {{ $debugInfo['api_key_length'] }}<br>
-                Is configured: {{ $debugInfo['is_configured'] ? 'Sí' : 'No' }}
-            </div>
-        @endif
+
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -67,17 +58,29 @@
                 </div>
                 <ul id="conversationList" class="mt-4 space-y-2 max-h-64 overflow-y-auto">
                     @forelse($conversations as $conversation)
-                        <li>
-                            <button class="conversation-item w-full text-left px-3 py-2 rounded-lg border transition"
-                                    data-id="{{ $conversation->id }}"
-                                    data-title="{{ $conversation->title ?? 'Conversación sin título' }}"
-                                    @class([
-                                        'border-ddu-lavanda bg-ddu-lavanda/10 text-ddu-lavanda' => optional($activeConversation)->id === $conversation->id,
-                                        'border-transparent hover:border-ddu-lavanda/40 text-gray-700' => optional($activeConversation)->id !== $conversation->id,
-                                    ])>
-                                <p class="text-sm font-medium truncate">{{ $conversation->title ?? 'Conversación sin título' }}</p>
-                                <p class="text-xs text-gray-500">{{ $conversation->messages_count }} mensajes</p>
-                            </button>
+                        <li class="conversation-item-container" data-id="{{ $conversation->id }}">
+                            <div class="group relative">
+                                <button class="conversation-item w-full text-left px-3 py-2 rounded-lg border transition"
+                                        data-id="{{ $conversation->id }}"
+                                        data-title="{{ $conversation->title ?? 'Conversación sin título' }}"
+                                        @class([
+                                            'border-ddu-lavanda bg-ddu-lavanda/10 text-ddu-lavenda' => optional($activeConversation)->id === $conversation->id,
+                                            'border-transparent hover:border-ddu-lavanda/40 text-gray-700' => optional($activeConversation)->id !== $conversation->id,
+                                        ])>
+                                    <p class="text-sm font-medium truncate pr-8">{{ $conversation->title ?? 'Conversación sin título' }}</p>
+                                    <p class="text-xs text-gray-500">{{ $conversation->messages_count }} mensajes</p>
+                                </button>
+                                
+                                <!-- Menú de opciones -->
+                                <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button class="conversation-menu-toggle text-gray-400 hover:text-gray-600 p-1" 
+                                            data-conversation-id="{{ $conversation->id }}">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
                         </li>
                     @empty
                         <li class="text-sm text-gray-500">Inicia tu primera conversación con el asistente.</li>
@@ -85,28 +88,7 @@
                 </ul>
             </div>
 
-            <div class="ddu-card">
-                <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Configuración del asistente</h3>
-                <form method="POST" action="{{ route('assistant.settings.update') }}" class="mt-4 space-y-4">
-                    @csrf
-                    <div>
-                        <label for="openai_api_key" class="block text-xs font-medium text-gray-600 uppercase">API Key de ChatGPT</label>
-                        <input type="password" id="openai_api_key" name="openai_api_key"
-                               value=""
-                               placeholder="sk-..."
-                               class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ddu-lavanda focus:border-ddu-lavanda"
-                               autocomplete="off">
-                        <p class="text-xs text-gray-500 mt-1">La clave se almacena cifrada y solo se usa para tus solicitudes. Deja el campo vacío para mantener la clave actual.</p>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="checkbox" id="enable_drive_calendar" name="enable_drive_calendar" value="1"
-                               @checked($settings->enable_drive_calendar)
-                               class="rounded border-gray-300 text-ddu-lavanda focus:ring-ddu-lavanda">
-                        <label for="enable_drive_calendar" class="text-sm text-gray-600">Usar token de Drive para integrar Google Calendar</label>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-full">Guardar configuración</button>
-                </form>
-            </div>
+
 
             <div class="ddu-card">
                 <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Contexto de reuniones</h3>
@@ -585,5 +567,159 @@
             event.target.value = '';
         }
     });
+
+    // Manejo de menús contextuales para conversaciones
+    document.addEventListener('click', function(event) {
+        // Cerrar todos los menús abiertos cuando se hace clic fuera
+        if (!event.target.closest('.conversation-menu')) {
+            document.querySelectorAll('.conversation-menu').forEach(menu => {
+                menu.remove();
+            });
+        }
+    });
+
+    // Agregar event listeners a los toggles de menú
+    document.addEventListener('click', function(event) {
+        if (event.target.closest('.conversation-menu-toggle')) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const button = event.target.closest('.conversation-menu-toggle');
+            const conversationId = button.getAttribute('data-conversation-id');
+            const conversationItem = button.closest('.conversation-item-container');
+            
+            // Cerrar otros menús
+            document.querySelectorAll('.conversation-menu').forEach(menu => {
+                menu.remove();
+            });
+
+            // Crear y mostrar menú contextual
+            showConversationMenu(button, conversationId, conversationItem);
+        }
+    });
+
+    function showConversationMenu(button, conversationId, conversationItem) {
+        const menu = document.createElement('div');
+        menu.className = 'conversation-menu absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-40';
+        menu.innerHTML = `
+            <button class="rename-conversation w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg flex items-center space-x-2" data-conversation-id="${conversationId}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                </svg>
+                <span>Renombrar</span>
+            </button>
+            <button class="delete-conversation w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg flex items-center space-x-2" data-conversation-id="${conversationId}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                <span>Eliminar</span>
+            </button>
+        `;
+        
+        const buttonRect = button.getBoundingClientRect();
+        button.closest('.group').appendChild(menu);
+    }
+
+    // Manejar renombrar conversación
+    document.addEventListener('click', function(event) {
+        if (event.target.closest('.rename-conversation')) {
+            const button = event.target.closest('.rename-conversation');
+            const conversationId = button.getAttribute('data-conversation-id');
+            const conversationItem = document.querySelector(`[data-id="${conversationId}"]`);
+            const currentTitle = conversationItem.getAttribute('data-title');
+            
+            // Cerrar menú
+            document.querySelectorAll('.conversation-menu').forEach(menu => menu.remove());
+            
+            // Mostrar prompt para nuevo nombre
+            const newTitle = prompt('Nuevo nombre para la conversación:', currentTitle);
+            if (newTitle && newTitle.trim() && newTitle.trim() !== currentTitle) {
+                updateConversationTitle(conversationId, newTitle.trim());
+            }
+        }
+    });
+
+    // Manejar eliminar conversación
+    document.addEventListener('click', function(event) {
+        if (event.target.closest('.delete-conversation')) {
+            const button = event.target.closest('.delete-conversation');
+            const conversationId = button.getAttribute('data-conversation-id');
+            
+            // Cerrar menú
+            document.querySelectorAll('.conversation-menu').forEach(menu => menu.remove());
+            
+            // Confirmar eliminación
+            if (confirm('¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer.')) {
+                deleteConversation(conversationId);
+            }
+        }
+    });
+
+    async function updateConversationTitle(conversationId, newTitle) {
+        try {
+            const response = await fetch(`/asistente/conversaciones/${conversationId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ title: newTitle })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Actualizar la UI
+                const conversationItem = document.querySelector(`[data-id="${conversationId}"]`);
+                if (conversationItem) {
+                    conversationItem.setAttribute('data-title', newTitle);
+                    const titleElement = conversationItem.querySelector('.text-sm.font-medium');
+                    if (titleElement) {
+                        titleElement.textContent = newTitle;
+                    }
+                }
+                
+                // Actualizar título si es la conversación activa
+                if (conversationId == (document.getElementById('conversationId').value)) {
+                    document.getElementById('conversationTitle').textContent = newTitle;
+                }
+            } else {
+                alert('Error al actualizar el nombre de la conversación');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al actualizar el nombre de la conversación');
+        }
+    }
+
+    async function deleteConversation(conversationId) {
+        try {
+            const response = await fetch(`/asistente/conversaciones/${conversationId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
+
+            if (response.ok) {
+                // Eliminar de la UI
+                const conversationContainer = document.querySelector(`[data-id="${conversationId}"]`);
+                if (conversationContainer) {
+                    conversationContainer.remove();
+                }
+                
+                // Si era la conversación activa, limpiar el chat
+                if (conversationId == (document.getElementById('conversationId').value)) {
+                    clearChat();
+                    document.getElementById('conversationId').value = '';
+                    document.getElementById('conversationTitle').textContent = 'Bienvenido al asistente DDU';
+                }
+            } else {
+                alert('Error al eliminar la conversación');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al eliminar la conversación');
+        }
+    }
 </script>
 @endsection

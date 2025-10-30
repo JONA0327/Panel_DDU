@@ -4,9 +4,22 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class AssistantSettingsController extends Controller
 {
+    public function index(Request $request): View
+    {
+        $user = $request->user();
+        $settings = $user->assistantSetting()->firstOrCreate([], [
+            'enable_drive_calendar' => true,
+        ]);
+
+        $apiConnected = !empty($settings->openai_api_key);
+
+        return view('dashboard.asistente.configuracion', compact('settings', 'apiConnected'));
+    }
+
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([

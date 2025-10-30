@@ -131,6 +131,22 @@ class AssistantController extends Controller
         return response()->noContent();
     }
 
+    public function updateConversation(Request $request, AssistantConversation $conversation): Response
+    {
+        $this->authorizeConversation($request, $conversation);
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+        ]);
+
+        $conversation->update(['title' => $validated['title']]);
+
+        return response()->json([
+            'success' => true,
+            'conversation' => $conversation,
+        ]);
+    }
+
     public function sendMessage(Request $request)
     {
         $validated = $request->validate([
