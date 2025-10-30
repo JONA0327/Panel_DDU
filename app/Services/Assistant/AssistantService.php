@@ -189,7 +189,11 @@ class AssistantService
             $base .= "\n\nContexto disponible:\n" . $context;
         }
 
-        $base .= "\n\nCuando el usuario solicite agendar una reunión o evento, analiza la solicitud y si cuentas con la información de fecha, hora y participantes, utiliza la función de programación para crear el evento en Google Calendar.";
+        $base .= "\n\nCuando el usuario solicite agendar una reunión o evento:\n" .
+                 "1. SIEMPRE revisa la FECHA Y HORA ACTUAL en el contexto proporcionado\n" .
+                 "2. Calcula correctamente fechas relativas (mañana, pasado mañana, etc.)\n" .
+                 "3. NUNCA uses años anteriores - SIEMPRE usa el año actual (2025)\n" .
+                 "4. Utiliza la función de programación para crear el evento en Google Calendar";
 
         return $base;
     }
@@ -201,7 +205,7 @@ class AssistantService
                 'type' => 'function',
                 'function' => [
                     'name' => 'schedule_calendar_event',
-                    'description' => 'Programa un evento en el Google Calendar del usuario autenticado usando el token disponible.',
+                    'description' => 'Programa un evento en el Google Calendar del usuario. IMPORTANTE: Siempre utiliza el año actual (2025) y calcula fechas relativas basándote en la fecha actual proporcionada en el contexto.',
                     'parameters' => [
                         'type' => 'object',
                         'properties' => [
@@ -211,11 +215,11 @@ class AssistantService
                             ],
                             'start' => [
                                 'type' => 'string',
-                                'description' => 'Fecha y hora de inicio en formato ISO 8601.',
+                                'description' => 'Fecha y hora de inicio en formato ISO 8601 (ej: 2025-10-31T11:00:00-06:00). DEBE usar el año actual 2025.',
                             ],
                             'end' => [
                                 'type' => 'string',
-                                'description' => 'Fecha y hora de finalización en formato ISO 8601.',
+                                'description' => 'Fecha y hora de finalización en formato ISO 8601 (ej: 2025-10-31T12:00:00-06:00). DEBE usar el año actual 2025.',
                             ],
                             'description' => [
                                 'type' => 'string',

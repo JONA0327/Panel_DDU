@@ -37,6 +37,9 @@ class AssistantContextBuilder
 
         $contextParts = [];
 
+        // Incluir información de fecha y hora actual SIEMPRE
+        $contextParts[] = $this->buildCurrentDateTimeContext();
+
         if (! empty($meetingIds)) {
             $contextParts[] = $this->buildMeetingsContext($user, $meetingIds, $userMessage);
         }
@@ -346,5 +349,28 @@ class AssistantContextBuilder
         }
 
         return false;
+    }
+
+    protected function buildCurrentDateTimeContext(): string
+    {
+        $now = Carbon::now();
+        $timezone = config('app.timezone', 'America/Mexico_City');
+        
+        return sprintf(
+            "FECHA Y HORA ACTUAL: %s (Zona horaria: %s)\n" .
+            "Para calcular fechas relativas:\n" .
+            "- 'mañana' = %s\n" .
+            "- 'pasado mañana' = %s\n" .
+            "- 'la próxima semana' = %s\n" .
+            "- 'el próximo mes' = %s\n" .
+            "IMPORTANTE: Siempre usa el año %s para nuevos eventos, NUNCA años anteriores.",
+            $now->translatedFormat('l d \d\e F \d\e Y \a \l\a\s H:i'),
+            $timezone,
+            $now->addDay()->translatedFormat('l d \d\e F \d\e Y'),
+            $now->addDays(2)->translatedFormat('l d \d\e F \d\e Y'),
+            $now->addWeek()->translatedFormat('l d \d\e F \d\e Y'),
+            $now->addMonth()->translatedFormat('l d \d\e F \d\e Y'),
+            $now->year
+        );
     }
 }

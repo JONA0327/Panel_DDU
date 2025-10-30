@@ -89,7 +89,7 @@ class GoogleCalendarService
                 'base_uri' => $this->httpClient->getConfig('base_uri'),
                 'user_id' => $user->id,
             ]);
-            
+
             $response = $this->httpClient->post('calendar/v3/calendars/primary/events', [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,
@@ -102,12 +102,12 @@ class GoogleCalendarService
                 'user_id' => $user->id,
                 'message' => $exception->getMessage(),
             ];
-            
+
             // Agregar respuesta si hay una respuesta HTTP
             if ($exception->getResponse()) {
                 $logData['response'] = (string) $exception->getResponse()->getBody();
             }
-            
+
             Log::error('Error al crear evento en Google Calendar.', $logData);
 
             throw new RuntimeException('No fue posible programar el evento en Google Calendar.');
@@ -142,7 +142,7 @@ class GoogleCalendarService
                 'base_uri' => $this->httpClient->getConfig('base_uri'),
                 'user_id' => $user->id,
             ]);
-            
+
             $response = $this->httpClient->get('calendar/v3/calendars/primary/events?' . $query, [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,
@@ -153,12 +153,12 @@ class GoogleCalendarService
                 'user_id' => $user->id,
                 'message' => $exception->getMessage(),
             ];
-            
+
             // Agregar respuesta si hay una respuesta HTTP
             if ($exception->getResponse()) {
                 $logData['response'] = (string) $exception->getResponse()->getBody();
             }
-            
+
             Log::error('Error al obtener eventos de Google Calendar.', $logData);
 
             throw new RuntimeException('No fue posible consultar los eventos de Google Calendar.');
