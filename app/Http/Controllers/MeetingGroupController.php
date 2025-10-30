@@ -144,7 +144,7 @@ class MeetingGroupController extends Controller
 
         // Verificar si la reunión ya está compartida con el grupo
         $existingPivot = $group->meetings()->where('meeting_id', $meeting->id)->first();
-        
+
         if (!$existingPivot) {
             // Agregar la reunión al grupo con información de quién la compartió
             $group->meetings()->attach($meeting->id, ['shared_by' => $user->id]);

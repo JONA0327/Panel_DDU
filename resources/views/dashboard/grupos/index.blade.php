@@ -132,7 +132,7 @@
                                                         </p>
                                                     @endif
                                                 </div>
-                                                <button 
+                                                <button
                                                     onclick="showMeetingDetails('{{ $meeting->id }}')"
                                                     class="ml-3 text-xs px-2 py-1 rounded-full bg-ddu-lavanda/10 text-ddu-lavanda font-semibold hover:bg-ddu-lavanda/20 transition-colors cursor-pointer">
                                                     Ver detalles

@@ -14,6 +14,9 @@ class MeetingDetailsController extends Controller
     {
         try {
             $transcription = MeetingTranscription::findOrFail($transcriptionId);
+            
+            // Verificar permisos de acceso
+            $this->authorizeMeeting($transcription);
 
             $meetingInfo = [
                 'summary' => 'Resumen no disponible.',
@@ -77,5 +80,41 @@ class MeetingDetailsController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Verificar si el usuario tiene permisos para acceder a la reunión.
+     */
+    private function authorizeMeeting(MeetingTranscription $meeting): void
+    {
+        $user = auth()->user();
+
+        // Verificar si es el propietario directo de la reunión
+        if ($meeting->user_id && $meeting->user_id === optional($user)->id) {
+            return;
+        }
+
+        if ($meeting->username && $meeting->username === optional($user)->username) {
+            return;
+        }
+
+        // Verificar si el usuario tiene acceso a través de grupos
+        if ($user && $this->hasGroupAccess($meeting, $user)) {
+            return;
+        }
+
+        abort(403, 'No tienes permisos para acceder a esta reunión.');
+    }
+
+    /**
+     * Verificar si el usuario tiene acceso a la reunión a través de grupos compartidos.
+     */
+    private function hasGroupAccess(MeetingTranscription $meeting, $user): bool
+    {
+        return $meeting->groups()
+            ->whereHas('members', function ($query) use ($user) {
+                $query->where('users.id', $user->id);
+            })
+            ->exists();
     }
 }
