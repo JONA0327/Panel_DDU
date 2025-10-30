@@ -39,7 +39,7 @@ class AssistantConversation extends Model
         static::deleting(function (AssistantConversation $conversation) {
             // Eliminar todos los mensajes asociados
             $conversation->messages()->delete();
-            
+
             // Eliminar todos los documentos asociados
             $conversation->documents()->delete();
         });

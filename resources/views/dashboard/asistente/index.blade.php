@@ -70,10 +70,10 @@
                                     <p class="text-sm font-medium truncate pr-8">{{ $conversation->title ?? 'Conversación sin título' }}</p>
                                     <p class="text-xs text-gray-500">{{ $conversation->messages_count }} mensajes</p>
                                 </button>
-                                
+
                                 <!-- Menú de opciones -->
                                 <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button class="conversation-menu-toggle text-gray-400 hover:text-gray-600 p-1" 
+                                    <button class="conversation-menu-toggle text-gray-400 hover:text-gray-600 p-1"
                                             data-conversation-id="{{ $conversation->id }}">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01"></path>
@@ -282,10 +282,10 @@
                     <label for="conversationTitle" class="block text-sm font-medium text-gray-700 mb-2">
                         Nuevo nombre de la conversación
                     </label>
-                    <input type="text" 
-                           id="conversationTitle" 
-                           name="title" 
-                           required 
+                    <input type="text"
+                           id="conversationTitle"
+                           name="title"
+                           required
                            maxlength="255"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ddu-lavanda focus:border-ddu-lavanda"
                            placeholder="Ingresa el nuevo nombre...">
@@ -326,7 +326,7 @@
                     <div>
                         <h4 class="text-sm font-medium text-gray-900">¿Estás seguro?</h4>
                         <p class="text-sm text-gray-500 mt-1">
-                            Esta acción eliminará permanentemente la conversación "<span id="deleteConversationName"></span>" 
+                            Esta acción eliminará permanentemente la conversación "<span id="deleteConversationName"></span>"
                             y todos sus mensajes asociados. Esta acción no se puede deshacer.
                         </p>
                     </div>
@@ -663,11 +663,11 @@
         if (event.target.closest('.conversation-menu-toggle')) {
             event.preventDefault();
             event.stopPropagation();
-            
+
             const button = event.target.closest('.conversation-menu-toggle');
             const conversationId = button.getAttribute('data-conversation-id');
             const conversationItem = button.closest('.conversation-item-container');
-            
+
             // Cerrar otros menús
             document.querySelectorAll('.conversation-menu').forEach(menu => {
                 menu.remove();
@@ -695,7 +695,7 @@
                 <span>Eliminar</span>
             </button>
         `;
-        
+
         const buttonRect = button.getBoundingClientRect();
         button.closest('.group').appendChild(menu);
     }
@@ -711,10 +711,10 @@
             const conversationId = button.getAttribute('data-conversation-id');
             const conversationItem = document.querySelector(`[data-id="${conversationId}"]`);
             const currentTitle = conversationItem.getAttribute('data-title');
-            
+
             // Cerrar menú
             document.querySelectorAll('.conversation-menu').forEach(menu => menu.remove());
-            
+
             // Abrir modal de renombrar
             openRenameModal(conversationId, currentTitle);
         }
@@ -727,10 +727,10 @@
             const conversationId = button.getAttribute('data-conversation-id');
             const conversationItem = document.querySelector(`[data-id="${conversationId}"]`);
             const conversationTitle = conversationItem.getAttribute('data-title');
-            
+
             // Cerrar menú
             document.querySelectorAll('.conversation-menu').forEach(menu => menu.remove());
-            
+
             // Abrir modal de eliminar
             openDeleteModal(conversationId, conversationTitle);
         }
@@ -758,7 +758,7 @@
                         titleElement.textContent = newTitle;
                     }
                 }
-                
+
                 // Actualizar título si es la conversación activa
                 if (conversationId == (document.getElementById('conversationId').value)) {
                     document.getElementById('conversationTitle').textContent = newTitle;
@@ -787,7 +787,7 @@
                 if (conversationContainer) {
                     conversationContainer.remove();
                 }
-                
+
                 // Si era la conversación activa, limpiar el chat
                 if (conversationId == (document.getElementById('conversationId').value)) {
                     clearChat();
