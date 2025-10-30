@@ -19,10 +19,24 @@ class GoogleCalendarService
 
     public function __construct(?Client $httpClient = null)
     {
-        $this->httpClient = $httpClient ?: new Client([
-            'base_uri' => 'https://www.googleapis.com/',
-            'timeout' => 60,
-        ]);
+        if ($httpClient) {
+            // Si se pasa un cliente personalizado, asegurar que tenga base_uri configurado
+            $config = $httpClient->getConfig();
+            if (empty($config['base_uri'])) {
+                $this->httpClient = new Client(array_merge($config, [
+                    'base_uri' => 'https://www.googleapis.com/',
+                    'timeout' => 60,
+                ]));
+            } else {
+                $this->httpClient = $httpClient;
+            }
+        } else {
+            // Cliente por defecto
+            $this->httpClient = new Client([
+                'base_uri' => 'https://www.googleapis.com/',
+                'timeout' => 60,
+            ]);
+        }
     }
 
     protected function resolveToken(User $user): GoogleToken
