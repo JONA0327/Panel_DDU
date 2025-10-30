@@ -687,7 +687,7 @@
                 <!-- Navegación de pestañas -->
                 <div class="border-b border-gray-200 mb-6">
                     <nav class="flex space-x-8">
-                        <button type="button" 
+                        <button type="button"
                                 class="tab-button tab-active py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
                                 data-tab="resumen">
                             <div class="flex items-center space-x-2">
@@ -697,7 +697,7 @@
                                 <span>Resumen</span>
                             </div>
                         </button>
-                        <button type="button" 
+                        <button type="button"
                                 class="tab-button py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
                                 data-tab="puntos-clave">
                             <div class="flex items-center space-x-2">
@@ -707,7 +707,7 @@
                                 <span>Puntos Clave</span>
                             </div>
                         </button>
-                        <button type="button" 
+                        <button type="button"
                                 class="tab-button py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
                                 data-tab="transcripcion">
                             <div class="flex items-center space-x-2">
@@ -735,7 +735,7 @@
                                 </h3>
                                 <p id="modal-summary" class="text-gray-700 leading-relaxed"></p>
                             </div>
-                            
+
                             <!-- Reproductor de audio -->
                             <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -1708,7 +1708,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Inicializar pestañas después de cargar los datos
         initializeTabs();
-        
+
         // Mostrar la primera pestaña por defecto (Resumen)
         const firstTab = document.querySelector('.tab-button[data-tab="resumen"]');
         const firstPane = document.getElementById('tab-resumen');
@@ -1721,7 +1721,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.classList.remove('tab-active');
             });
-            
+
             // Mostrar la primera pestaña
             firstTab.classList.add('tab-active');
             firstPane.style.display = 'block';

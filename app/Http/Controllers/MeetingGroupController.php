@@ -208,7 +208,7 @@ class MeetingGroupController extends Controller
         }
 
         DB::beginTransaction();
-        
+
         try {
             // Obtener el nombre del grupo antes de eliminarlo
             $groupName = $group->name;
@@ -226,13 +226,13 @@ class MeetingGroupController extends Controller
 
             DB::commit();
 
-            return redirect()->route('grupos.index')->with('status', 
+            return redirect()->route('grupos.index')->with('status',
                 "El grupo \"{$groupName}\" ha sido eliminado correctamente. Se removieron {$membersCount} miembros y se dejaron de compartir {$meetingsCount} reuniones."
             );
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return redirect()->back()->withErrors(['error' => 'Ocurrió un error al eliminar el grupo. Inténtalo de nuevo.']);
         }
     }
@@ -264,7 +264,7 @@ class MeetingGroupController extends Controller
             // Quitar la reunión del grupo
             $group->meetings()->detach($meeting->id);
 
-            return redirect()->back()->with('status', 
+            return redirect()->back()->with('status',
                 "La reunión \"{$meeting->meeting_name}\" ya no se comparte con el grupo \"{$group->name}\"."
             );
 

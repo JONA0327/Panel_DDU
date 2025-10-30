@@ -75,8 +75,8 @@
                             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white border border-ddu-aqua text-ddu-navy-dark">
                                 Grupo activo
                             </span>
-                            <button onclick="showDeleteGroupModal({{ $group->id }}, '{{ addslashes($group->name) }}')" 
-                                    class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200" 
+                            <button onclick="showDeleteGroupModal({{ $group->id }}, '{{ addslashes($group->name) }}')"
+                                    class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
                                     title="Eliminar grupo">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -189,7 +189,7 @@
                         </svg>
                     </div>
                 </div>
-                
+
                 <div class="text-center">
                     <h3 class="text-lg font-medium text-gray-900 mb-2" id="deleteGroupTitle">
                         ¿Eliminar grupo?
@@ -218,13 +218,13 @@
                 </div>
 
                 <div class="flex justify-end space-x-3">
-                    <button type="button" 
-                            onclick="closeDeleteGroupModal()" 
+                    <button type="button"
+                            onclick="closeDeleteGroupModal()"
                             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-ddu-lavanda">
                         Cancelar
                     </button>
-                    <button type="button" 
-                            onclick="confirmDeleteGroup()" 
+                    <button type="button"
+                            onclick="confirmDeleteGroup()"
                             class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
                         Eliminar grupo
                     </button>
@@ -244,7 +244,7 @@
                         </svg>
                     </div>
                 </div>
-                
+
                 <div class="text-center">
                     <h3 class="text-lg font-medium text-gray-900 mb-2">
                         ¿Dejar de compartir reunión?
@@ -255,13 +255,13 @@
                 </div>
 
                 <div class="flex justify-end space-x-3">
-                    <button type="button" 
-                            onclick="closeUnshareMeetingModal()" 
+                    <button type="button"
+                            onclick="closeUnshareMeetingModal()"
                             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-ddu-lavanda">
                         Cancelar
                     </button>
-                    <button type="button" 
-                            onclick="confirmUnshareMeeting()" 
+                    <button type="button"
+                            onclick="confirmUnshareMeeting()"
                             class="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500">
                         Dejar de compartir
                     </button>
@@ -283,15 +283,15 @@
         // Funciones para el modal de eliminar grupo
         function showDeleteGroupModal(groupId, groupName) {
             currentGroupData = { id: groupId, name: groupName };
-            
+
             // Actualizar el título del modal
             document.getElementById('deleteGroupTitle').textContent = `¿Eliminar grupo "${groupName}"?`;
-            
+
             // Mostrar el modal
             const modal = document.getElementById('deleteGroupModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            
+
             // Bloquear el scroll del body
             document.body.style.overflow = 'hidden';
         }
@@ -300,10 +300,10 @@
             const modal = document.getElementById('deleteGroupModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-            
+
             // Restaurar el scroll del body
             document.body.style.overflow = '';
-            
+
             // Limpiar datos
             currentGroupData = null;
         }
@@ -337,22 +337,22 @@
 
         // Funciones para el modal de dejar de compartir reunión
         function showUnshareMeetingModal(meetingId, groupId, meetingName, groupName) {
-            currentMeetingData = { 
-                meetingId: meetingId, 
-                groupId: groupId, 
-                meetingName: meetingName, 
-                groupName: groupName 
+            currentMeetingData = {
+                meetingId: meetingId,
+                groupId: groupId,
+                meetingName: meetingName,
+                groupName: groupName
             };
-            
+
             // Actualizar el mensaje del modal
-            document.getElementById('unshareMeetingMessage').textContent = 
+            document.getElementById('unshareMeetingMessage').textContent =
                 `¿Dejar de compartir "${meetingName}" con el grupo "${groupName}"? Los miembros del grupo perderán acceso a esta reunión.`;
-            
+
             // Mostrar el modal
             const modal = document.getElementById('unshareMeetingModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            
+
             // Bloquear el scroll del body
             document.body.style.overflow = 'hidden';
         }
@@ -361,10 +361,10 @@
             const modal = document.getElementById('unshareMeetingModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-            
+
             // Restaurar el scroll del body
             document.body.style.overflow = '';
-            
+
             // Limpiar datos
             currentMeetingData = null;
         }
