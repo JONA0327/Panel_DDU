@@ -183,7 +183,7 @@
         </aside>
 
         <main class="lg:col-span-3">
-            <div class="ddu-card h-full flex flex-col">
+            <div class="ddu-card flex flex-col" style="height: 600px;">
                 <div class="flex items-center justify-between border-b border-gray-200 pb-4 mb-4">
                     <div>
                         <h2 id="conversationTitle" class="text-2xl font-bold text-gray-900">
@@ -196,7 +196,7 @@
                     </div>
                 </div>
 
-                <div id="chatMessages" class="flex-1 overflow-y-auto space-y-4 pr-2">
+                <div id="chatMessages" class="flex-1 overflow-y-auto space-y-4 pr-2 min-h-0">
                     @if($activeConversation && $activeConversation->messages->isNotEmpty())
                         @foreach($activeConversation->messages as $message)
                             @continue($message->role === 'system')

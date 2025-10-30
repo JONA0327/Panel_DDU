@@ -355,7 +355,7 @@ class AssistantContextBuilder
     {
         $now = Carbon::now();
         $timezone = config('app.timezone', 'America/Mexico_City');
-        
+
         return sprintf(
             "FECHA Y HORA ACTUAL: %s (Zona horaria: %s)\n" .
             "Para calcular fechas relativas:\n" .
