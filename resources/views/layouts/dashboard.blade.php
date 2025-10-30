@@ -40,9 +40,14 @@
             <div class="p-6 border-b border-white/10">
                 <div class="flex justify-center">
                     <div class="w-20 h-20 flex items-center justify-center">
-                        <img src="{{ asset('build/Gemini_Generated_Image_wxj41rwxj41rwxj4-removebg-preview.png') }}"
+                        <img src="{{ asset('images/Gemini_Generated_Image_wxj41rwxj41rwxj4-removebg-preview.png') }}"
                              alt="DDU Logo"
-                             class="w-full h-full object-contain">
+                             class="w-full h-full object-contain"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <!-- Fallback cuando la imagen no carga -->
+                        <div class="w-full h-full bg-gradient-to-br from-ddu-aqua via-ddu-lavanda to-ddu-navy rounded-xl items-center justify-center text-white font-bold text-xl hidden">
+                            DDU
+                        </div>
                     </div>
                 </div>
             </div>

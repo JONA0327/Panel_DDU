@@ -1606,6 +1606,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     resetModalContent();
+
+    // Abrir modal automáticamente si se pasa el parámetro 'show' en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const showMeetingId = urlParams.get('show');
+    if (showMeetingId) {
+        // Buscar la tarjeta de reunión correspondiente
+        const targetCard = document.querySelector(`[data-transcription-id="${showMeetingId}"]`);
+        if (targetCard) {
+            // Esperar un momento para que la página se cargue completamente
+            setTimeout(() => {
+                openMeetingModal(showMeetingId);
+                // Limpiar el parámetro de la URL sin recargar la página
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.delete('show');
+                window.history.replaceState({}, '', newUrl);
+            }, 500);
+        }
+    }
 });
 </script>
 

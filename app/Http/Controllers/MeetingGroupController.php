@@ -26,10 +26,33 @@ class MeetingGroupController extends Controller
                 'members' => function ($query) {
                     $query->select('users.id', 'users.full_name', 'users.username', 'users.email');
                 },
-                'meetings:id,meeting_name,status'
+                'meetings' => function ($query) {
+                    $query->select('transcriptions_laravel.id', 'transcriptions_laravel.meeting_name')
+                          ->withPivot('shared_by', 'created_at');
+                },
+                'meetings.groups.owner:id,full_name,username'
             ])
             ->orderBy('name')
             ->get();
+
+        // Cargar información de los usuarios que compartieron las reuniones
+        $sharedByUserIds = $groups->flatMap(function ($group) {
+            return $group->meetings->pluck('pivot.shared_by');
+        })->filter()->unique();
+
+        $sharedByUsers = User::whereIn('id', $sharedByUserIds)
+            ->select('id', 'full_name', 'username')
+            ->get()
+            ->keyBy('id');
+
+        // Agregar información del usuario que compartió a cada reunión
+        $groups->each(function ($group) use ($sharedByUsers) {
+            $group->meetings->each(function ($meeting) use ($sharedByUsers) {
+                if ($meeting->pivot->shared_by && isset($sharedByUsers[$meeting->pivot->shared_by])) {
+                    $meeting->shared_by_user = $sharedByUsers[$meeting->pivot->shared_by];
+                }
+            });
+        });
 
         return view('dashboard.grupos.index', [
             'groups' => $groups,
@@ -72,10 +95,24 @@ class MeetingGroupController extends Controller
         $this->authorizeGroupManagement($group, $user);
 
         $validated = $request->validate([
-            'email' => ['required', 'email', 'exists:users,email'],
+            'email' => ['required', 'email'],
         ]);
 
-        $member = User::where('email', $validated['email'])->firstOrFail();
+        // Buscar usuario por email
+        $member = User::where('email', $validated['email'])->first();
+
+        if (!$member) {
+            return back()->withErrors(['email' => 'No existe un usuario con este email.']);
+        }
+
+        // Validar que el usuario pertenezca a la organización DDU
+        $isDDUMember = \App\Models\UserPanelMiembro::where('user_id', $member->id)
+            ->where('is_active', true)
+            ->exists();
+
+        if (!$isDDUMember) {
+            return back()->withErrors(['email' => 'El usuario debe pertenecer a la organización DDU para ser invitado.']);
+        }
 
         if ($group->members()->where('users.id', $member->id)->exists()) {
             return back()->with('status', 'El usuario ya pertenece a este grupo.');
@@ -105,14 +142,26 @@ class MeetingGroupController extends Controller
             ], 403);
         }
 
-        $group->meetings()->syncWithoutDetaching([$meeting->id]);
-        $meeting->load('groups:id,name');
+        // Verificar si la reunión ya está compartida con el grupo
+        $existingPivot = $group->meetings()->where('meeting_id', $meeting->id)->first();
+        
+        if (!$existingPivot) {
+            // Agregar la reunión al grupo con información de quién la compartió
+            $group->meetings()->attach($meeting->id, ['shared_by' => $user->id]);
+        }
+
+        $meeting->load(['groups' => function($query) {
+            $query->select('meeting_groups.id', 'meeting_groups.name')
+                  ->withPivot('shared_by', 'created_at');
+        }, 'groups.owner:id,full_name,username']);
 
         return response()->json([
             'message' => 'Reunión añadida al grupo correctamente.',
             'meeting_groups' => $meeting->groups->map(fn ($group) => [
                 'id' => $group->id,
                 'name' => $group->name,
+                'shared_by' => $group->pivot->shared_by,
+                'shared_at' => $group->pivot->created_at,
             ])->values(),
         ]);
     }

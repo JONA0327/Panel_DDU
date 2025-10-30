@@ -51,6 +51,7 @@ class MeetingTranscription extends Model
     public function groups(): BelongsToMany
     {
         return $this->belongsToMany(MeetingGroup::class, 'meeting_group_meeting', 'meeting_id', 'meeting_group_id')
+            ->withPivot('shared_by', 'created_at', 'updated_at')
             ->withTimestamps();
     }
 

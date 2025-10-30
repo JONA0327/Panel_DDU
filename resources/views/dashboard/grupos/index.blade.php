@@ -117,11 +117,27 @@
                             @if ($group->meetings->isEmpty())
                                 <p class="text-sm text-gray-500">Aún no has compartido reuniones con este grupo. Desde la sección de reuniones podrás añadirlas.</p>
                             @else
-                                <ul class="space-y-2 text-sm text-gray-700">
+                                <ul class="space-y-3 text-sm text-gray-700">
                                     @foreach ($group->meetings->take(4) as $meeting)
-                                        <li class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                                            <span class="font-medium truncate pr-3">{{ $meeting->meeting_name }}</span>
-                                            <span class="text-xs px-2 py-1 rounded-full bg-ddu-lavanda/10 text-ddu-lavanda font-semibold">{{ ucfirst($meeting->status_label ?? $meeting->status) }}</span>
+                                        <li class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                            <div class="flex items-start justify-between">
+                                                <div class="flex-1 min-w-0">
+                                                    <span class="font-medium text-gray-900 block truncate">{{ $meeting->meeting_name }}</span>
+                                                    @if (isset($meeting->shared_by_user))
+                                                        <p class="text-xs text-gray-500 mt-1">
+                                                            Compartida por <span class="font-medium text-ddu-lavanda">{{ $meeting->shared_by_user->full_name ?? $meeting->shared_by_user->username }}</span>
+                                                            @if ($meeting->pivot->created_at)
+                                                                · {{ $meeting->pivot->created_at->diffForHumans() }}
+                                                            @endif
+                                                        </p>
+                                                    @endif
+                                                </div>
+                                                <button 
+                                                    onclick="showMeetingDetails('{{ $meeting->id }}')"
+                                                    class="ml-3 text-xs px-2 py-1 rounded-full bg-ddu-lavanda/10 text-ddu-lavanda font-semibold hover:bg-ddu-lavanda/20 transition-colors cursor-pointer">
+                                                    Ver detalles
+                                                </button>
+                                            </div>
                                         </li>
                                     @endforeach
                                 </ul>
@@ -140,4 +156,11 @@
             @endforelse
         </div>
     </div>
+
+    <script>
+        function showMeetingDetails(meetingId) {
+            // Redirigir a la página de reuniones con el modal abierto para esa reunión específica
+            window.location.href = "{{ route('reuniones.index') }}?show=" + meetingId;
+        }
+    </script>
 @endsection
