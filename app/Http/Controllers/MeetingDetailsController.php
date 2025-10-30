@@ -14,7 +14,7 @@ class MeetingDetailsController extends Controller
     {
         try {
             $transcription = MeetingTranscription::findOrFail($transcriptionId);
-            
+
             // Verificar permisos de acceso
             $this->authorizeMeeting($transcription);
 
