@@ -46,6 +46,15 @@ class MeetingTranscription extends Model
     }
 
     /**
+     * Groups that can access this meeting.
+     */
+    public function groups(): BelongsToMany
+    {
+        return $this->belongsToMany(MeetingGroup::class, 'meeting_group_meeting', 'meeting_id', 'meeting_group_id')
+            ->withTimestamps();
+    }
+
+    /**
      * Tasks generated for this meeting.
      */
     public function tasks(): HasMany
