@@ -68,6 +68,13 @@ class GoogleCalendarService
         }
 
         try {
+            // Debug temporal: verificar la URL que se está usando
+            Log::info('GoogleCalendarService: Intentando crear evento', [
+                'url' => 'calendar/v3/calendars/primary/events',
+                'base_uri' => $this->httpClient->getConfig('base_uri'),
+                'user_id' => $user->id,
+            ]);
+            
             $response = $this->httpClient->post('calendar/v3/calendars/primary/events', [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,
@@ -100,6 +107,13 @@ class GoogleCalendarService
         ]);
 
         try {
+            // Debug temporal: verificar la URL que se está usando
+            Log::info('GoogleCalendarService: Intentando obtener eventos', [
+                'url' => 'calendar/v3/calendars/primary/events?' . $query,
+                'base_uri' => $this->httpClient->getConfig('base_uri'),
+                'user_id' => $user->id,
+            ]);
+            
             $response = $this->httpClient->get('calendar/v3/calendars/primary/events?' . $query, [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,

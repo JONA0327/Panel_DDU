@@ -45,6 +45,17 @@
                 Última actualización: {{ now()->format('d/m/Y H:i') }}
             </div>
         </div>
+
+        {{-- Debug info temporal --}}
+        @if(isset($debugInfo))
+            <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                <strong>Debug Info:</strong><br>
+                Settings exists: {{ $debugInfo['settings_exists'] ? 'Sí' : 'No' }}<br>
+                API Key exists: {{ $debugInfo['api_key_exists'] ? 'Sí' : 'No' }}<br>
+                API Key length: {{ $debugInfo['api_key_length'] }}<br>
+                Is configured: {{ $debugInfo['is_configured'] ? 'Sí' : 'No' }}
+            </div>
+        @endif
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">

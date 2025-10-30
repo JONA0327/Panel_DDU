@@ -27,8 +27,8 @@ class MeetingController extends Controller
         $meetingData = [
             'id' => $meeting->id,
             'name' => $meeting->meeting_name,
-            'description' => $meeting->meeting_description,
-            'status' => $meeting->status_label,
+            'description' => null, // Campo no disponible en la estructura actual
+            'status' => 'completed', // Estado por defecto
             'started_at' => optional($meeting->started_at)->toIso8601String(),
             'ended_at' => optional($meeting->ended_at)->toIso8601String(),
             'duration_minutes' => $meeting->duration_minutes,

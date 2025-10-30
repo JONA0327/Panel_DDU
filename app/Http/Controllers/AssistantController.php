@@ -55,7 +55,7 @@ class AssistantController extends Controller
             ->forUser($user)
             ->orderByDesc('created_at')
             ->limit(25)
-            ->get(['id', 'meeting_name', 'meeting_description', 'status', 'created_at']);
+            ->get(['id', 'meeting_name', 'created_at']);
 
         $containers = MeetingContentContainer::query()
             ->where('username', $user->username)
@@ -72,17 +72,25 @@ class AssistantController extends Controller
             }
         }
 
+        // Debug: Verificar el estado de la API key
+        $apiKeyExists = $settings && $settings->openai_api_key;
+        $isConfigured = $this->openAiClient->isConfigured($settings);
+
         return view('dashboard.asistente.index', [
-            'stats' => [
-                'total_members' => \App\Models\UserPanelMiembro::count(),
-            ],
             'settings' => $settings,
             'conversations' => $conversations,
             'activeConversation' => $activeConversation,
             'meetings' => $meetings,
             'containers' => $containers,
             'calendarEvents' => $calendarEvents,
-            'apiConnected' => $this->openAiClient->isConfigured($settings),
+            'apiConnected' => $isConfigured,
+            // Debug info temporal
+            'debugInfo' => [
+                'settings_exists' => (bool) $settings,
+                'api_key_exists' => $apiKeyExists,
+                'api_key_length' => $apiKeyExists ? strlen($settings->openai_api_key) : 0,
+                'is_configured' => $isConfigured,
+            ],
         ]);
     }
 

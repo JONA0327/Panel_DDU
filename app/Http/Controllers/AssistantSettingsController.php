@@ -23,7 +23,8 @@ class AssistantSettingsController extends Controller
             'enable_drive_calendar' => $request->boolean('enable_drive_calendar'),
         ]);
 
-        if ($request->has('openai_api_key')) {
+        // Solo actualizar la API key si se proporcionó un valor no vacío
+        if ($request->filled('openai_api_key')) {
             $settings->openai_api_key = $validated['openai_api_key'];
         }
 

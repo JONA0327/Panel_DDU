@@ -95,7 +95,7 @@
                     </svg>
                 </a>
 
-                <a href="{{ route('asistente.index') }}" class="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                <a href="{{ route('assistant.index') }}" class="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 bg-ddu-aqua rounded-lg flex items-center justify-center">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

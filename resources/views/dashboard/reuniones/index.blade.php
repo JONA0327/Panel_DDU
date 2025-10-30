@@ -254,7 +254,7 @@
                              @if($hasTranscript) data-transcription-id="{{ $meeting->id }}" @endif
                              data-meeting-container="{{ $containerId }}"
                              data-meeting-title="{{ strtolower($meeting->meeting_name) }}"
-                             data-meeting-description="{{ strtolower($meeting->meeting_description ?? '') }}"
+                             data-meeting-description=""
                              data-meeting-groups="{{ $meeting->groups->pluck('id')->implode(',') }}">
 
                             <!-- Header de la tarjeta -->
@@ -280,11 +280,7 @@
 
                             <!-- Contenido de la tarjeta -->
                             <div class="p-6">
-                                @if ($meeting->meeting_description)
-                                    <div class="mb-4 p-3 bg-ddu-aqua/10 rounded-xl border-l-4 border-ddu-aqua">
-                                        <p class="text-gray-700 text-sm leading-relaxed">{{ Str::limit($meeting->meeting_description, 120) }}</p>
-                                    </div>
-                                @endif
+                                {{-- Descripción no disponible en la estructura actual --}}
 
                                 <div class="mb-4" data-meeting-groups-target @if ($meeting->groups->isEmpty()) style="display:none;" @endif>
                                     @if ($meeting->groups->isNotEmpty())
@@ -443,7 +439,7 @@
                          @if($hasTranscript) data-transcription-id="{{ $meeting->id }}" @endif
                          data-meeting-container=""
                          data-meeting-title="{{ strtolower($meeting->meeting_name) }}"
-                         data-meeting-description="{{ strtolower($meeting->meeting_description ?? '') }}"
+                         data-meeting-description=""
                          data-meeting-groups="{{ $meeting->groups->pluck('id')->implode(',') }}">
 
                         <!-- Encabezado de tarjeta mejorado -->
@@ -477,11 +473,7 @@
 
                         <!-- Contenido de la tarjeta -->
                         <div class="p-6">
-                            @if ($meeting->meeting_description)
-                                <div class="mb-4 p-3 bg-ddu-lavanda/10 rounded-xl border-l-4 border-ddu-lavanda">
-                                    <p class="text-gray-700 text-sm leading-relaxed">{{ Str::limit($meeting->meeting_description, 120) }}</p>
-                                </div>
-                            @endif
+                            {{-- Descripción no disponible en la estructura actual --}}
 
                             <div class="mb-4" data-meeting-groups-target @if ($meeting->groups->isEmpty()) style="display:none;" @endif>
                                 @if ($meeting->groups->isNotEmpty())

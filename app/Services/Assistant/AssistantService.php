@@ -56,6 +56,8 @@ class AssistantService
 
     public function generateAssistantReply(User $user, AssistantConversation $conversation, AssistantSetting $settings, string $message, array $options = []): AssistantMessage
     {
+        // Agregar el mensaje del usuario a las opciones para análisis de contexto
+        $options['user_message'] = $message;
         $context = $this->contextBuilder->build($user, $conversation, $options);
 
         $history = $conversation->messages()->orderBy('created_at')->get()->map(function (AssistantMessage $message) {
@@ -88,6 +90,16 @@ class AssistantService
         $toolCalls = $this->client->extractToolCalls($response);
 
         if ($toolCalls->isNotEmpty()) {
+            // Primero agregar el mensaje del asistente con los tool calls
+            $choice = Arr::first($response['choices']);
+            $assistantMessage = $choice['message'];
+            $messages[] = [
+                'role' => 'assistant',
+                'content' => $assistantMessage['content'] ?? null,
+                'tool_calls' => $assistantMessage['tool_calls'] ?? []
+            ];
+
+            // Luego agregar las respuestas de los tools
             foreach ($toolCalls as $toolCall) {
                 $messages[] = $this->handleToolCall($user, $conversation, $toolCall);
             }

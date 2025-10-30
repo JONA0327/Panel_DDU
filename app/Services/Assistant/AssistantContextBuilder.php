@@ -93,10 +93,10 @@ class AssistantContextBuilder
 
         foreach ($meetings as $meeting) {
             $lines[] = sprintf('- Reunión "%s" (completada)', $meeting->meeting_name ?? 'Sin título');
-            
+
             // Obtener detalles reales de la reunión desde Google Drive
             $meetingInfo = $this->getMeetingDetailsFromDrive($meeting, $user);
-            
+
             if ($meetingInfo['summary'] && $meetingInfo['summary'] !== 'Resumen no disponible.') {
                 $lines[] = '  Resumen: ' . Str::of($meetingInfo['summary'])->squish();
             }
@@ -311,7 +311,7 @@ class AssistantContextBuilder
         }
 
         $query = strtolower($query);
-        
+
         // Palabras clave que indican necesidad de transcripción completa
         $fullTranscriptionKeywords = [
             'fragmentos',

@@ -22,14 +22,10 @@ class MeetingTranscription extends Model
     protected $fillable = [
         'username',
         'meeting_name',
-        'meeting_description',
-        'status',
-        'duration_seconds',
         'transcript_drive_id',
         'transcript_download_url',
         'audio_drive_id',
         'audio_download_url',
-        'metadata',
     ];
 
     protected $casts = [
@@ -76,13 +72,8 @@ class MeetingTranscription extends Model
      */
     public function getStatusLabelAttribute(): string
     {
-        return match ($this->status) {
-            self::STATUS_SCHEDULED => 'Programada',
-            self::STATUS_PROCESSING => 'En proceso',
-            self::STATUS_COMPLETED => 'Finalizada',
-            self::STATUS_FAILED => 'Error',
-            default => ucfirst($this->status ?? 'Desconocido'),
-        };
+        // Todas las reuniones almacenadas se consideran finalizadas
+        return 'Finalizada';
     }
 
     /**
@@ -90,13 +81,8 @@ class MeetingTranscription extends Model
      */
     public function getStatusBadgeColorAttribute(): string
     {
-        return match ($this->status) {
-            self::STATUS_SCHEDULED => 'bg-blue-100 text-blue-800',
-            self::STATUS_PROCESSING => 'bg-amber-100 text-amber-700',
-            self::STATUS_COMPLETED => 'bg-green-100 text-green-700',
-            self::STATUS_FAILED => 'bg-red-100 text-red-700',
-            default => 'bg-gray-200 text-gray-700',
-        };
+        // Todas las reuniones se muestran como completadas
+        return 'bg-green-100 text-green-700';
     }
 
     /**
