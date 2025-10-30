@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\AssistantController;
+use App\Http\Controllers\AssistantSettingsController;
 use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\MeetingController;
-use App\Http\Controllers\MeetingGroupController;
 use App\Http\Controllers\MeetingDetailsController;
+use App\Http\Controllers\MeetingGroupController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,7 +37,15 @@ Route::middleware(['auth', 'verified', 'ddu.member'])->group(function () {
     Route::get('/grupos', [MeetingGroupController::class, 'index'])->name('grupos.index');
     Route::post('/grupos', [MeetingGroupController::class, 'store'])->name('grupos.store');
     Route::post('/grupos/{group}/miembros', [MeetingGroupController::class, 'storeMember'])->name('grupos.members.store');
-    Route::get('/asistente', [App\Http\Controllers\DashboardController::class, 'asistente'])->name('asistente.index');
+    Route::prefix('asistente')->name('assistant.')->group(function () {
+        Route::get('/', [AssistantController::class, 'index'])->name('index');
+        Route::post('/mensaje', [AssistantController::class, 'sendMessage'])->name('message');
+        Route::post('/conversaciones', [AssistantController::class, 'createConversation'])->name('conversations.create');
+        Route::get('/conversaciones/{conversation}', [AssistantController::class, 'showConversation'])->name('conversations.show');
+        Route::delete('/conversaciones/{conversation}', [AssistantController::class, 'deleteConversation'])->name('conversations.delete');
+        Route::post('/documentos', [AssistantController::class, 'uploadDocument'])->name('documents.store');
+        Route::post('/configuracion', [AssistantSettingsController::class, 'update'])->name('settings.update');
+    });
 
     // Rutas para administración de miembros (solo administradores)
     Route::prefix('admin/members')->name('admin.members.')->group(function () {

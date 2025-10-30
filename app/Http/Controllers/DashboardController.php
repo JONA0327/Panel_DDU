@@ -48,16 +48,4 @@ class DashboardController extends Controller
         return view('dashboard.reuniones.index', compact('stats', 'meetings', 'googleToken', 'userGroups'));
     }
 
-    /**
-     * Asistente index
-     */
-    public function asistente()
-    {
-        // Estadísticas para el asistente
-        $stats = [
-            'total_members' => \App\Models\UserPanelMiembro::count(),
-        ];
-
-        return view('dashboard.asistente.index', compact('stats'));
-    }
 }
