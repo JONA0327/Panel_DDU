@@ -8,7 +8,18 @@
     // Definir variables para contenedores únicos al inicio
     $containersCount = $meetings->flatMap->containers->unique('id')->count();
     $uniqueContainers = $meetings->flatMap->containers->unique('id');
+    $groupsForJs = $userGroups->map(function ($group) {
+        return [
+            'id' => $group->id,
+            'name' => $group->name,
+            'description' => $group->description,
+            'members_count' => $group->members_count,
+        ];
+    });
 @endphp
+<script>
+    window.dduUserGroups = @json($groupsForJs);
+</script>
 <div class="space-y-6 fade-in">
     <!-- Header mejorado -->
     <div class="relative overflow-hidden bg-gradient-to-r from-ddu-lavanda via-purple-500 to-ddu-aqua rounded-2xl shadow-xl">
@@ -250,7 +261,8 @@
                              @if($hasTranscript) data-transcription-id="{{ $meeting->id }}" @endif
                              data-meeting-container="{{ $containerId }}"
                              data-meeting-title="{{ strtolower($meeting->meeting_name) }}"
-                             data-meeting-description="{{ strtolower($meeting->meeting_description ?? '') }}">
+                             data-meeting-description="{{ strtolower($meeting->meeting_description ?? '') }}"
+                             data-meeting-groups="{{ $meeting->groups->pluck('id')->implode(',') }}">
 
                             <!-- Header de la tarjeta -->
                             <div class="relative bg-gradient-to-br from-gray-50 to-white p-4 border-b border-gray-100">
@@ -280,6 +292,22 @@
                                         <p class="text-gray-700 text-sm leading-relaxed">{{ Str::limit($meeting->meeting_description, 120) }}</p>
                                     </div>
                                 @endif
+
+                                <div class="mb-4" data-meeting-groups-target @if ($meeting->groups->isEmpty()) style="display:none;" @endif>
+                                    @if ($meeting->groups->isNotEmpty())
+                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Compartido con</p>
+                                        <div class="flex flex-wrap gap-2">
+                                            @foreach ($meeting->groups as $meetingGroup)
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-ddu-lavanda/10 text-ddu-lavanda text-xs font-semibold">
+                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857M9 7a3 3 0 106 0 3 3 0 00-6 0z"></path>
+                                                    </svg>
+                                                    {{ $meetingGroup->name }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
 
                                 <!-- Información de fechas y duración mejorada -->
                                 <div class="space-y-3">
@@ -350,27 +378,40 @@
                                         @endif
                                     </div>
 
-                                    <!-- Botones de descarga ocultos pero funcionales -->
-                                    <div class="hidden">
-                                        @if ($meeting->audio_drive_id)
-                                            <a href="{{ route('download.audio', $meeting) }}"
-                                               onclick="event.stopPropagation();"
-                                               title="Descargar audio">Descargar audio</a>
-                                        @endif
+                                    <div class="flex items-center space-x-3">
+                                        <button type="button"
+                                                class="inline-flex items-center px-3 py-1.5 rounded-xl bg-gradient-to-r from-ddu-aqua to-ddu-lavanda text-white text-xs font-semibold shadow-sm hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ddu-lavanda"
+                                                data-open-group-modal
+                                                data-meeting-id="{{ $meeting->id }}"
+                                                data-meeting-name="{{ e($meeting->meeting_name) }}">
+                                            <svg class="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                            </svg>
+                                            Añadir a grupo
+                                        </button>
 
-                                        @if ($meeting->transcript_drive_id)
-                                            <a href="{{ route('download.ju', $meeting) }}"
-                                               onclick="event.stopPropagation();"
-                                               title="Descargar archivo .ju">Descargar .ju</a>
+                                        <!-- Botones de descarga ocultos pero funcionales -->
+                                        <div class="hidden">
+                                            @if ($meeting->audio_drive_id)
+                                                <a href="{{ route('download.audio', $meeting) }}"
+                                                   onclick="event.stopPropagation();"
+                                                   title="Descargar audio">Descargar audio</a>
+                                            @endif
+
+                                            @if ($meeting->transcript_drive_id)
+                                                <a href="{{ route('download.ju', $meeting) }}"
+                                                   onclick="event.stopPropagation();"
+                                                   title="Descargar archivo .ju">Descargar .ju</a>
+                                            @endif
+                                        </div>
+
+                                        <!-- ID de reunión con diseño mejorado -->
+                                        @if ($meeting->meeting_id)
+                                            <div class="bg-gradient-to-r from-ddu-aqua/10 to-ddu-lavanda/10 backdrop-blur-sm border border-gray-200 px-3 py-1.5 rounded-xl">
+                                                <span class="text-xs font-mono text-gray-600 font-medium">#{{ substr($meeting->meeting_id, 0, 8) }}</span>
+                                            </div>
                                         @endif
                                     </div>
-
-                                    <!-- ID de reunión con diseño mejorado -->
-                                    @if ($meeting->meeting_id)
-                                        <div class="bg-gradient-to-r from-ddu-aqua/10 to-ddu-lavanda/10 backdrop-blur-sm border border-gray-200 px-3 py-1.5 rounded-xl">
-                                            <span class="text-xs font-mono text-gray-600 font-medium">#{{ substr($meeting->meeting_id, 0, 8) }}</span>
-                                        </div>
-                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -409,7 +450,8 @@
                          @if($hasTranscript) data-transcription-id="{{ $meeting->id }}" @endif
                          data-meeting-container=""
                          data-meeting-title="{{ strtolower($meeting->meeting_name) }}"
-                         data-meeting-description="{{ strtolower($meeting->meeting_description ?? '') }}">
+                         data-meeting-description="{{ strtolower($meeting->meeting_description ?? '') }}"
+                         data-meeting-groups="{{ $meeting->groups->pluck('id')->implode(',') }}">
 
                         <!-- Encabezado de tarjeta mejorado -->
                         <div class="bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 p-5 rounded-t-2xl border-b border-gray-100">
@@ -447,6 +489,22 @@
                                     <p class="text-gray-700 text-sm leading-relaxed">{{ Str::limit($meeting->meeting_description, 120) }}</p>
                                 </div>
                             @endif
+
+                            <div class="mb-4" data-meeting-groups-target @if ($meeting->groups->isEmpty()) style="display:none;" @endif>
+                                @if ($meeting->groups->isNotEmpty())
+                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Compartido con</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach ($meeting->groups as $meetingGroup)
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-ddu-lavanda/10 text-ddu-lavanda text-xs font-semibold">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857M9 7a3 3 0 106 0 3 3 0 00-6 0z"></path>
+                                                </svg>
+                                                {{ $meetingGroup->name }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
 
                             <!-- Información de fechas y duración mejorada -->
                             <div class="space-y-3">
@@ -517,27 +575,40 @@
                                     @endif
                                 </div>
 
-                                <!-- Botones de descarga ocultos pero funcionales -->
-                                <div class="hidden">
-                                    @if ($meeting->audio_drive_id)
-                                        <a href="{{ route('download.audio', $meeting) }}"
-                                           onclick="event.stopPropagation();"
-                                           title="Descargar audio">Descargar audio</a>
-                                    @endif
+                                <div class="flex items-center space-x-3">
+                                    <button type="button"
+                                            class="inline-flex items-center px-3 py-1.5 rounded-xl bg-gradient-to-r from-ddu-aqua to-ddu-lavanda text-white text-xs font-semibold shadow-sm hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ddu-lavanda"
+                                            data-open-group-modal
+                                            data-meeting-id="{{ $meeting->id }}"
+                                            data-meeting-name="{{ e($meeting->meeting_name) }}">
+                                        <svg class="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                        </svg>
+                                        Añadir a grupo
+                                    </button>
 
-                                    @if ($meeting->transcript_drive_id)
-                                        <a href="{{ route('download.ju', $meeting) }}"
-                                           onclick="event.stopPropagation();"
-                                           title="Descargar archivo .ju">Descargar .ju</a>
+                                    <!-- Botones de descarga ocultos pero funcionales -->
+                                    <div class="hidden">
+                                        @if ($meeting->audio_drive_id)
+                                            <a href="{{ route('download.audio', $meeting) }}"
+                                               onclick="event.stopPropagation();"
+                                               title="Descargar audio">Descargar audio</a>
+                                        @endif
+
+                                        @if ($meeting->transcript_drive_id)
+                                            <a href="{{ route('download.ju', $meeting) }}"
+                                               onclick="event.stopPropagation();"
+                                               title="Descargar archivo .ju">Descargar .ju</a>
+                                        @endif
+                                    </div>
+
+                                    <!-- ID de reunión con diseño mejorado -->
+                                    @if ($meeting->meeting_id)
+                                        <div class="bg-gradient-to-r from-gray-100/70 to-gray-200/70 backdrop-blur-sm border border-gray-200 px-3 py-1.5 rounded-xl">
+                                            <span class="text-xs font-mono text-gray-600 font-medium">#{{ substr($meeting->meeting_id, 0, 8) }}</span>
+                                        </div>
                                     @endif
                                 </div>
-
-                                <!-- ID de reunión con diseño mejorado -->
-                                @if ($meeting->meeting_id)
-                                    <div class="bg-gradient-to-r from-gray-100/70 to-gray-200/70 backdrop-blur-sm border border-gray-200 px-3 py-1.5 rounded-xl">
-                                        <span class="text-xs font-mono text-gray-600 font-medium">#{{ substr($meeting->meeting_id, 0, 8) }}</span>
-                                    </div>
-                                @endif
                             </div>
                         </div>
                     </div>
@@ -574,6 +645,30 @@
             </div>
         </div>
     @endif
+    <!-- Modal para compartir en grupos -->
+    <div id="group-selection-modal" class="ju-modal modal-oculto">
+        <div class="ju-modal-backdrop"></div>
+        <div class="modal-contenido max-w-xl">
+            <button id="group-selection-close" type="button" class="modal-cerrar" aria-label="Cerrar selección de grupos">
+                &times;
+            </button>
+
+            <div class="space-y-5">
+                <div>
+                    <h2 class="text-2xl font-semibold text-gray-900">Compartir reunión</h2>
+                    <p id="group-selection-title" class="mt-1 text-sm text-gray-500">Selecciona un grupo para compartir esta reunión.</p>
+                </div>
+
+                <div id="group-selection-feedback" class="hidden px-3 py-2 rounded-lg text-sm font-medium"></div>
+
+                <div id="group-selection-list" class="space-y-3"></div>
+
+                <div class="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                    Solo los miembros del grupo seleccionado podrán ver la reunión compartida.
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Modal de detalles de la reunión -->
     <div id="meeting-modal" class="ju-modal modal-oculto">
         <div class="ju-modal-backdrop"></div>
@@ -915,6 +1010,284 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const groupModal = document.getElementById('group-selection-modal');
+    const groupListEl = document.getElementById('group-selection-list');
+    const groupModalTitle = document.getElementById('group-selection-title');
+    const groupModalFeedback = document.getElementById('group-selection-feedback');
+    const closeGroupModalBtn = document.getElementById('group-selection-close');
+    const userGroups = Array.isArray(window.dduUserGroups) ? window.dduUserGroups : [];
+    let currentGroupMeetingId = null;
+    let currentGroupMeetingCard = null;
+
+    function getMeetingGroupIds(meetingCard) {
+        if (!meetingCard) {
+            return [];
+        }
+
+        const raw = meetingCard.dataset.meetingGroups || '';
+        if (!raw.trim()) {
+            return [];
+        }
+
+        return raw.split(',').map(id => id.trim()).filter(Boolean);
+    }
+
+    function updateMeetingCardGroups(meetingCard, groups) {
+        if (!meetingCard) {
+            return;
+        }
+
+        const groupIds = Array.isArray(groups) ? groups.map(group => group.id).filter(Boolean) : [];
+        meetingCard.dataset.meetingGroups = groupIds.join(',');
+
+        const container = meetingCard.querySelector('[data-meeting-groups-target]');
+        if (!container) {
+            return;
+        }
+
+        if (!groupIds.length) {
+            container.style.display = 'none';
+            container.innerHTML = '';
+            return;
+        }
+
+        container.style.display = '';
+        container.innerHTML = '';
+
+        const title = document.createElement('p');
+        title.className = 'text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2';
+        title.textContent = 'Compartido con';
+        container.appendChild(title);
+
+        const badges = document.createElement('div');
+        badges.className = 'flex flex-wrap gap-2';
+
+        groups.forEach(group => {
+            const badge = document.createElement('span');
+            badge.className = 'inline-flex items-center px-3 py-1 rounded-full bg-ddu-lavanda/10 text-ddu-lavanda text-xs font-semibold';
+
+            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            icon.setAttribute('class', 'w-3 h-3 mr-1');
+            icon.setAttribute('fill', 'none');
+            icon.setAttribute('stroke', 'currentColor');
+            icon.setAttribute('viewBox', '0 0 24 24');
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('d', 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857M9 7a3 3 0 106 0 3 3 0 00-6 0z');
+            icon.appendChild(path);
+            badge.appendChild(icon);
+
+            const label = document.createElement('span');
+            label.textContent = group.name;
+            badge.appendChild(label);
+
+            badges.appendChild(badge);
+        });
+
+        container.appendChild(badges);
+    }
+
+    function renderGroupList() {
+        if (!groupListEl) {
+            return;
+        }
+
+        const assignedIds = getMeetingGroupIds(currentGroupMeetingCard);
+        groupListEl.innerHTML = '';
+
+        if (!userGroups.length) {
+            const emptyMessage = document.createElement('p');
+            emptyMessage.className = 'text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3';
+            emptyMessage.textContent = 'Aún no tienes grupos disponibles. Crea uno desde la pestaña Mis grupos.';
+            groupListEl.appendChild(emptyMessage);
+            return;
+        }
+
+        userGroups.forEach(group => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3';
+
+            const info = document.createElement('div');
+            info.className = 'flex-1 min-w-0 pr-3';
+
+            const title = document.createElement('p');
+            title.className = 'font-semibold text-gray-800 truncate';
+            title.textContent = group.name;
+            info.appendChild(title);
+
+            if (group.description) {
+                const description = document.createElement('p');
+                description.className = 'text-xs text-gray-500 mt-1 truncate';
+                description.textContent = group.description;
+                info.appendChild(description);
+            }
+
+            const meta = document.createElement('p');
+            meta.className = 'text-xs text-gray-400 mt-1';
+            meta.textContent = `${group.members_count} ${group.members_count === 1 ? 'miembro' : 'miembros'}`;
+            info.appendChild(meta);
+
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.dataset.shareGroupId = group.id;
+            button.className = 'inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition';
+
+            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            icon.setAttribute('class', 'w-3.5 h-3.5 mr-2');
+            icon.setAttribute('fill', 'none');
+            icon.setAttribute('stroke', 'currentColor');
+            icon.setAttribute('viewBox', '0 0 24 24');
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            path.setAttribute('stroke-width', '2');
+            icon.appendChild(path);
+
+            const label = document.createElement('span');
+
+            if (assignedIds.includes(String(group.id))) {
+                button.disabled = true;
+                button.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+                path.setAttribute('d', 'M5 13l4 4L19 7');
+                label.textContent = 'Compartido';
+            } else {
+                button.classList.add('bg-gradient-to-r', 'from-ddu-aqua', 'to-ddu-lavanda', 'text-white', 'hover:shadow-lg', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-ddu-lavanda');
+                path.setAttribute('d', 'M12 4v16m8-8H4');
+                label.textContent = 'Compartir';
+            }
+
+            button.appendChild(icon);
+            button.appendChild(label);
+
+            wrapper.appendChild(info);
+            wrapper.appendChild(button);
+
+            groupListEl.appendChild(wrapper);
+        });
+    }
+
+    function openGroupSelectionModal(meetingId, meetingName, meetingCard) {
+        if (!groupModal) {
+            return;
+        }
+
+        currentGroupMeetingId = meetingId;
+        currentGroupMeetingCard = meetingCard;
+
+        if (groupModalTitle) {
+            const titleText = meetingName ? `Selecciona un grupo para compartir "${meetingName}"` : 'Selecciona un grupo para compartir esta reunión.';
+            groupModalTitle.textContent = titleText;
+        }
+
+        if (groupModalFeedback) {
+            groupModalFeedback.classList.add('hidden');
+            groupModalFeedback.textContent = '';
+        }
+
+        renderGroupList();
+
+        groupModal.classList.remove('modal-oculto');
+        document.body.classList.add('modal-open');
+    }
+
+    function closeGroupSelectionModal() {
+        if (!groupModal) {
+            return;
+        }
+
+        groupModal.classList.add('modal-oculto');
+        document.body.classList.remove('modal-open');
+        currentGroupMeetingId = null;
+        currentGroupMeetingCard = null;
+    }
+
+    async function shareMeetingWithGroup(groupId) {
+        if (!currentGroupMeetingId || !csrfToken) {
+            return;
+        }
+
+        if (groupModalFeedback) {
+            groupModalFeedback.textContent = 'Compartiendo reunión...';
+            groupModalFeedback.className = 'px-3 py-2 rounded-lg text-sm font-medium bg-ddu-lavanda/10 text-ddu-lavanda';
+            groupModalFeedback.classList.remove('hidden');
+        }
+
+        try {
+            const response = await fetch(`/reuniones/${currentGroupMeetingId}/grupos`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ group_id: groupId }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'No se pudo compartir la reunión.');
+            }
+
+            if (groupModalFeedback) {
+                groupModalFeedback.textContent = data.message || 'Reunión añadida al grupo correctamente.';
+                groupModalFeedback.className = 'px-3 py-2 rounded-lg text-sm font-medium bg-green-50 text-green-700 border border-green-200';
+            }
+
+            if (Array.isArray(data.meeting_groups)) {
+                updateMeetingCardGroups(currentGroupMeetingCard, data.meeting_groups);
+            }
+
+            renderGroupList();
+        } catch (error) {
+            if (groupModalFeedback) {
+                groupModalFeedback.textContent = error.message || 'Ocurrió un problema al compartir la reunión.';
+                groupModalFeedback.className = 'px-3 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-700 border border-red-200';
+                groupModalFeedback.classList.remove('hidden');
+            }
+        }
+    }
+
+    document.querySelectorAll('[data-open-group-modal]').forEach(button => {
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const meetingId = button.dataset.meetingId;
+            const meetingName = button.dataset.meetingName || '';
+            const meetingCard = button.closest('.meeting-card');
+            openGroupSelectionModal(meetingId, meetingName, meetingCard);
+        });
+    });
+
+    if (groupListEl) {
+        groupListEl.addEventListener('click', (event) => {
+            const targetButton = event.target.closest('[data-share-group-id]');
+            if (!targetButton || targetButton.disabled) {
+                return;
+            }
+
+            const groupId = targetButton.dataset.shareGroupId;
+            shareMeetingWithGroup(groupId);
+        });
+    }
+
+    if (closeGroupModalBtn) {
+        closeGroupModalBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            closeGroupSelectionModal();
+        });
+    }
+
+    if (groupModal) {
+        groupModal.addEventListener('click', (event) => {
+            if (event.target === groupModal || event.target.classList.contains('ju-modal-backdrop')) {
+                closeGroupSelectionModal();
+            }
+        });
+    }
+
     // Función para filtrar reuniones
     function filterMeetings() {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -1235,6 +1608,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             closeModal();
+            closeGroupSelectionModal();
         }
     });
 

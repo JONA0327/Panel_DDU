@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\MeetingGroupController;
 use App\Http\Controllers\MeetingDetailsController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -27,9 +28,13 @@ Route::middleware(['auth', 'verified', 'ddu.member'])->group(function () {
     Route::get('/reuniones', [App\Http\Controllers\DashboardController::class, 'reuniones'])->name('reuniones.index');
     Route::get('/reuniones/detalles', [MeetingController::class, 'showDetails'])->name('reuniones.showDetails');
     Route::get('/reuniones/{meeting}', [MeetingController::class, 'show'])->name('reuniones.show');
+    Route::post('/reuniones/{meeting}/grupos', [MeetingGroupController::class, 'attachMeeting'])->name('grupos.meetings.attach');
     Route::get('/download/audio/{meeting}', [DownloadController::class, 'downloadAudio'])->name('download.audio');
     Route::get('/download/ju/{meeting}', [DownloadController::class, 'downloadJu'])->name('download.ju');
     Route::get('/meeting-details/{transcriptionId}', [MeetingDetailsController::class, 'show'])->name('meetings.details');
+    Route::get('/grupos', [MeetingGroupController::class, 'index'])->name('grupos.index');
+    Route::post('/grupos', [MeetingGroupController::class, 'store'])->name('grupos.store');
+    Route::post('/grupos/{group}/miembros', [MeetingGroupController::class, 'storeMember'])->name('grupos.members.store');
     Route::get('/asistente', [App\Http\Controllers\DashboardController::class, 'asistente'])->name('asistente.index');
 
     // Rutas para administración de miembros (solo administradores)

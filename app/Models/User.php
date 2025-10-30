@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -118,5 +119,21 @@ class User extends Authenticatable
     public function meetings(): HasMany
     {
         return $this->hasMany(MeetingTranscription::class, 'user_id', 'id');
+    }
+
+    /**
+     * Meeting groups created by the user.
+     */
+    public function ownedMeetingGroups(): HasMany
+    {
+        return $this->hasMany(MeetingGroup::class, 'owner_id');
+    }
+
+    /**
+     * Meeting groups where the user is a member.
+     */
+    public function meetingGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(MeetingGroup::class, 'meeting_group_user')->withTimestamps();
     }
 }

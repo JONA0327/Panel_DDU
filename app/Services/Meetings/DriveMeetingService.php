@@ -21,14 +21,22 @@ class DriveMeetingService
 
         $meetings = MeetingTranscription::query()
             ->forUser($user)
-            ->with('containers')
+            ->with(['containers', 'groups'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $sharedMeetings = MeetingTranscription::query()
+            ->whereHas('groups.members', function ($query) use ($user) {
+                $query->where('users.id', $user->id);
+            })
+            ->with(['containers', 'groups'])
             ->orderByDesc('created_at')
             ->get();
 
         $containerMeetings = MeetingContentContainer::query()
             ->where('username', $user->username)
             ->with(['meetings' => function ($query) {
-                $query->orderByDesc('created_at');
+                $query->with('groups')->orderByDesc('created_at');
             }])
             ->get()
             ->flatMap(function (MeetingContentContainer $container) {
@@ -37,7 +45,11 @@ class DriveMeetingService
                 });
             });
 
-        $meetings = $meetings->merge($containerMeetings)->unique('id')->values();
+        $meetings = $meetings
+            ->merge($sharedMeetings)
+            ->merge($containerMeetings)
+            ->unique('id')
+            ->values();
 
         $stats = $this->calculateStats($meetings);
 

@@ -16,11 +16,11 @@ class MeetingController extends Controller
     {
         $user = Auth::user();
 
-        if ($meeting->user_id !== optional($user)->id && $meeting->username !== optional($user)->username) {
+        if (! $this->userCanAccessMeeting($meeting, $user)) {
             abort(403);
         }
 
-        $meeting->load(['containers:id,name', 'tasks' => function ($query) {
+        $meeting->load(['containers:id,name', 'groups:id,name', 'tasks' => function ($query) {
             $query->orderBy('fecha_limite')->orderBy('created_at');
         }]);
 
@@ -37,6 +37,10 @@ class MeetingController extends Controller
             'containers' => $meeting->containers->map(fn ($container) => [
                 'id' => $container->id,
                 'name' => $container->name,
+            ])->values(),
+            'groups' => $meeting->groups->map(fn ($group) => [
+                'id' => $group->id,
+                'name' => $group->name,
             ])->values(),
         ];
 
@@ -164,4 +168,20 @@ class MeetingController extends Controller
         return null;
     }
 
+    private function userCanAccessMeeting(MeetingTranscription $meeting, ?\App\Models\User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($meeting->user_id === $user->id || $meeting->username === $user->username) {
+            return true;
+        }
+
+        return $meeting->groups()
+            ->whereHas('members', function ($query) use ($user) {
+                $query->where('users.id', $user->id);
+            })
+            ->exists();
+    }
 }

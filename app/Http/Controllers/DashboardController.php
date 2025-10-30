@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MeetingGroup;
 use App\Services\Meetings\DriveMeetingService;
 use Illuminate\Support\Facades\Auth;
 
@@ -39,7 +40,12 @@ class DashboardController extends Controller
 
         [$meetings, $stats, $googleToken] = $driveMeetingService->getOverviewForUser($user);
 
-        return view('dashboard.reuniones.index', compact('stats', 'meetings', 'googleToken'));
+        $userGroups = MeetingGroup::forUser($user)
+            ->withCount('members')
+            ->orderBy('name')
+            ->get(['id', 'name', 'description']);
+
+        return view('dashboard.reuniones.index', compact('stats', 'meetings', 'googleToken', 'userGroups'));
     }
 
     /**
