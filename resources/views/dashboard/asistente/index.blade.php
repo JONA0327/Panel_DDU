@@ -264,6 +264,86 @@
     </div>
 </div>
 
+<!-- Modal para renombrar conversación -->
+<div id="renameModal" class="ddu-modal" style="display: none;">
+    <div class="ddu-modal-backdrop"></div>
+    <div class="ddu-modal-content">
+        <div class="ddu-modal-header">
+            <h3 class="text-lg font-semibold text-gray-900">Renombrar conversación</h3>
+            <button class="ddu-modal-close" onclick="closeRenameModal()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="ddu-modal-body">
+            <form id="renameForm" onsubmit="handleRenameSubmit(event)">
+                <div class="mb-4">
+                    <label for="conversationTitle" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nuevo nombre de la conversación
+                    </label>
+                    <input type="text" 
+                           id="conversationTitle" 
+                           name="title" 
+                           required 
+                           maxlength="255"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ddu-lavanda focus:border-ddu-lavanda"
+                           placeholder="Ingresa el nuevo nombre...">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeRenameModal()" class="btn btn-secondary">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Guardar cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para eliminar conversación -->
+<div id="deleteModal" class="ddu-modal" style="display: none;">
+    <div class="ddu-modal-backdrop"></div>
+    <div class="ddu-modal-content">
+        <div class="ddu-modal-header">
+            <h3 class="text-lg font-semibold text-gray-900">Eliminar conversación</h3>
+            <button class="ddu-modal-close" onclick="closeDeleteModal()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="ddu-modal-body">
+            <div class="mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0">
+                        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900">¿Estás seguro?</h4>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Esta acción eliminará permanentemente la conversación "<span id="deleteConversationName"></span>" 
+                            y todos sus mensajes asociados. Esta acción no se puede deshacer.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeDeleteModal()" class="btn btn-secondary">
+                    Cancelar
+                </button>
+                <button type="button" onclick="confirmDelete()" class="btn btn-danger">
+                    Eliminar conversación
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     let conversationId = document.getElementById('conversationId').value || null;
@@ -620,6 +700,10 @@
         button.closest('.group').appendChild(menu);
     }
 
+    // Variables globales para los modals
+    let currentRenameConversationId = null;
+    let currentDeleteConversationId = null;
+
     // Manejar renombrar conversación
     document.addEventListener('click', function(event) {
         if (event.target.closest('.rename-conversation')) {
@@ -631,11 +715,8 @@
             // Cerrar menú
             document.querySelectorAll('.conversation-menu').forEach(menu => menu.remove());
             
-            // Mostrar prompt para nuevo nombre
-            const newTitle = prompt('Nuevo nombre para la conversación:', currentTitle);
-            if (newTitle && newTitle.trim() && newTitle.trim() !== currentTitle) {
-                updateConversationTitle(conversationId, newTitle.trim());
-            }
+            // Abrir modal de renombrar
+            openRenameModal(conversationId, currentTitle);
         }
     });
 
@@ -644,14 +725,14 @@
         if (event.target.closest('.delete-conversation')) {
             const button = event.target.closest('.delete-conversation');
             const conversationId = button.getAttribute('data-conversation-id');
+            const conversationItem = document.querySelector(`[data-id="${conversationId}"]`);
+            const conversationTitle = conversationItem.getAttribute('data-title');
             
             // Cerrar menú
             document.querySelectorAll('.conversation-menu').forEach(menu => menu.remove());
             
-            // Confirmar eliminación
-            if (confirm('¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer.')) {
-                deleteConversation(conversationId);
-            }
+            // Abrir modal de eliminar
+            openDeleteModal(conversationId, conversationTitle);
         }
     });
 
@@ -721,5 +802,75 @@
             alert('Error al eliminar la conversación');
         }
     }
+
+    // Función para limpiar el chat
+    function clearChat() {
+        const chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {
+            chatMessages.innerHTML = `
+                <div class="bg-gray-50 border border-dashed border-gray-200 rounded-lg p-6 text-center text-sm text-gray-600">
+                    ¡Comienza escribiendo tu primera consulta para que el asistente prepare el contexto!
+                </div>
+            `;
+        }
+    }
+
+    // Funciones para el modal de renombrar
+    function openRenameModal(conversationId, currentTitle) {
+        currentRenameConversationId = conversationId;
+        document.getElementById('conversationTitle').value = currentTitle;
+        document.getElementById('renameModal').style.display = 'flex';
+        document.getElementById('conversationTitle').focus();
+    }
+
+    function closeRenameModal() {
+        document.getElementById('renameModal').style.display = 'none';
+        currentRenameConversationId = null;
+        document.getElementById('conversationTitle').value = '';
+    }
+
+    function handleRenameSubmit(event) {
+        event.preventDefault();
+        const newTitle = document.getElementById('conversationTitle').value.trim();
+        if (newTitle && currentRenameConversationId) {
+            updateConversationTitle(currentRenameConversationId, newTitle);
+            closeRenameModal();
+        }
+    }
+
+    // Funciones para el modal de eliminar
+    function openDeleteModal(conversationId, conversationTitle) {
+        currentDeleteConversationId = conversationId;
+        document.getElementById('deleteConversationName').textContent = conversationTitle;
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+        currentDeleteConversationId = null;
+    }
+
+    function confirmDelete() {
+        if (currentDeleteConversationId) {
+            deleteConversation(currentDeleteConversationId);
+            closeDeleteModal();
+        }
+    }
+
+    // Cerrar modals con ESC
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeRenameModal();
+            closeDeleteModal();
+        }
+    });
+
+    // Cerrar modals al hacer clic en el backdrop
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('ddu-modal-backdrop')) {
+            closeRenameModal();
+            closeDeleteModal();
+        }
+    });
 </script>
 @endsection

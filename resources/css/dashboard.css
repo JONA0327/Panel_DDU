@@ -83,6 +83,21 @@
     @apply bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300;
 }
 
+.btn-primary {
+    @apply px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200;
+    background: linear-gradient(135deg, #6DDEDD 0%, #546CB1 50%, #6F78E4 100%);
+    @apply text-white shadow-md hover:shadow-lg transform hover:scale-105;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #6DDEDD 10%, #45539F 40%, #233771 70%, #1F2A4E 100%);
+}
+
+.btn-danger {
+    @apply px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200;
+    @apply bg-red-600 text-white hover:bg-red-700 shadow-md hover:shadow-lg transform hover:scale-105;
+}
+
 .btn-outline {
     @apply px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200;
     @apply border-2 text-gray-600 hover:bg-gray-100 border-gray-300;
