@@ -8,6 +8,7 @@ use App\Services\UserGoogleDriveService;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -96,6 +97,20 @@ class GoogleCalendarService
                 ],
                 'json' => $body,
             ]);
+        } catch (RequestException $exception) {
+            $logData = [
+                'user_id' => $user->id,
+                'message' => $exception->getMessage(),
+            ];
+            
+            // Agregar respuesta si hay una respuesta HTTP
+            if ($exception->getResponse()) {
+                $logData['response'] = (string) $exception->getResponse()->getBody();
+            }
+            
+            Log::error('Error al crear evento en Google Calendar.', $logData);
+
+            throw new RuntimeException('No fue posible programar el evento en Google Calendar.');
         } catch (GuzzleException $exception) {
             Log::error('Error al crear evento en Google Calendar.', [
                 'user_id' => $user->id,
@@ -116,7 +131,7 @@ class GoogleCalendarService
         $query = http_build_query([
             'timeMin' => $from->toIso8601String(),
             'timeMax' => $to->toIso8601String(),
-            'singleEvents' => true,
+            'singleEvents' => 'true',
             'orderBy' => 'startTime',
         ]);
 
@@ -133,6 +148,20 @@ class GoogleCalendarService
                     'Authorization' => 'Bearer ' . $accessToken,
                 ],
             ]);
+        } catch (RequestException $exception) {
+            $logData = [
+                'user_id' => $user->id,
+                'message' => $exception->getMessage(),
+            ];
+            
+            // Agregar respuesta si hay una respuesta HTTP
+            if ($exception->getResponse()) {
+                $logData['response'] = (string) $exception->getResponse()->getBody();
+            }
+            
+            Log::error('Error al obtener eventos de Google Calendar.', $logData);
+
+            throw new RuntimeException('No fue posible consultar los eventos de Google Calendar.');
         } catch (GuzzleException $exception) {
             Log::error('Error al obtener eventos de Google Calendar.', [
                 'user_id' => $user->id,
